@@ -30,7 +30,7 @@ async function fetchSteamPrice(itemName) {
   try {
     const response = await axios.get(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
         'Accept': 'application/json, text/plain, */*',
         'Referer': 'https://steamcommunity.com/market/',
       },
@@ -66,8 +66,14 @@ async function recordPriceSnapshots() {
     const price = await fetchSteamPrice(item.marketHashName);
     if (price) {
       if (!data.priceHistory[item.id]) data.priceHistory[item.id] = [];
-      data.priceHistory[item.id].push({ ts: price.timestamp, lowest: price.lowest_price, median: price.median_price, volume: price.volume });
-      if (data.priceHistory[item.id].length > 720) data.priceHistory[item.id] = data.priceHistory[item.id].slice(-720);
+      data.priceHistory[item.id].push({
+        ts: price.timestamp,
+        lowest: price.lowest_price,
+        median: price.median_price,
+        volume: price.volume
+      });
+      if (data.priceHistory[item.id].length > 720)
+        data.priceHistory[item.id] = data.priceHistory[item.id].slice(-720);
       item.currentPrice = price.lowest_price;
       item.currentMedian = price.median_price;
       item.currentVolume = price.volume;
@@ -81,13 +87,39 @@ app.get('/api/watchlist', (req, res) => res.json(loadData().watchlist));
 
 app.post('/api/watchlist', async (req, res) => {
   const { name, marketHashName, buyPrice, imageUrl } = req.body;
-  if (!name || !marketHashName) return res.status(400).json({ error: 'name and marketHashName required' });
+  if (!name || !marketHashName)
+    return res.status(400).json({ error: 'name and marketHashName required' });
+
   const data = loadData();
-  if (data.watchlist.find(w => w.marketHashName === marketHashName)) return res.status(409).json({ error: 'Already exists' });
+  if (data.watchlist.find(w => w.marketHashName === marketHashName))
+    return res.status(409).json({ error: 'Already exists' });
+
   const price = await fetchSteamPrice(marketHashName);
-  const item = { id: Date.now().toString(), name, marketHashName, buyPrice: buyPrice || null, imageUrl: imageUrl || null, currentPrice: price?.lowest_price || null, currentMedian: price?.median_price || null, currentVolume: price?.volume || 0, lastUpdated: price?.timestamp || null, addedAt: Date.now() };
+  const item = {
+    id: Date.now().toString(),
+    name,
+    marketHashName,
+    buyPrice: buyPrice || null,
+    imageUrl: imageUrl || null,
+    currentPrice: price?.lowest_price || null,
+    currentMedian: price?.median_price || null,
+    currentVolume: price?.volume || 0,
+    lastUpdated: price?.timestamp || null,
+    addedAt: Date.now()
+  };
+
   data.watchlist.push(item);
-  if (price) { if (!data.priceHistory[item.id]) data.priceHistory[item.id] = []; data.priceHistory[item.id].push({ ts: price.timestamp, lowest: price.lowest_price, median: price.median_price, volume: price.volume }); }
+
+  if (price) {
+    if (!data.priceHistory[item.id]) data.priceHistory[item.id] = [];
+    data.priceHistory[item.id].push({
+      ts: price.timestamp,
+      lowest: price.lowest_price,
+      median: price.median_price,
+      volume: price.volume
+    });
+  }
+
   saveData(data);
   res.json(item);
 });
@@ -96,7 +128,9 @@ app.patch('/api/watchlist/:id', (req, res) => {
   const data = loadData();
   const item = data.watchlist.find(w => w.id === req.params.id);
   if (!item) return res.status(404).json({ error: 'Not found' });
+
   if (req.body.buyPrice !== undefined) item.buyPrice = req.body.buyPrice;
+
   saveData(data);
   res.json(item);
 });
@@ -105,29 +139,50 @@ app.delete('/api/watchlist/:id', (req, res) => {
   const data = loadData();
   const idx = data.watchlist.findIndex(w => w.id === req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'Not found' });
+
   const [removed] = data.watchlist.splice(idx, 1);
   delete data.priceHistory[removed.id];
+
   saveData(data);
   res.json({ ok: true });
 });
 
-app.get('/api/history/:id', (req, res) => res.json(loadData().priceHistory[req.params.id] || []));
+app.get('/api/history/:id', (req, res) =>
+  res.json(loadData().priceHistory[req.params.id] || [])
+);
 
 app.post('/api/refresh/:id', async (req, res) => {
   const data = loadData();
   const item = data.watchlist.find(w => w.id === req.params.id);
   if (!item) return res.status(404).json({ error: 'Not found' });
+
   const price = await fetchSteamPrice(item.marketHashName);
   if (!price) return res.status(502).json({ error: 'Steam fetch failed' });
-  item.currentPrice = price.lowest_price; item.currentMedian = price.median_price; item.currentVolume = price.volume; item.lastUpdated = price.timestamp;
+
+  item.currentPrice = price.lowest_price;
+  item.currentMedian = price.median_price;
+  item.currentVolume = price.volume;
+  item.lastUpdated = price.timestamp;
+
   if (!data.priceHistory[item.id]) data.priceHistory[item.id] = [];
-  data.priceHistory[item.id].push({ ts: price.timestamp, lowest: price.lowest_price, median: price.median_price, volume: price.volume });
+  data.priceHistory[item.id].push({
+    ts: price.timestamp,
+    lowest: price.lowest_price,
+    median: price.median_price,
+    volume: price.volume
+  });
+
   saveData(data);
   res.json({ item, price });
 });
 
-app.post('/api/refresh-all', (req, res) => { res.json({ ok: true }); recordPriceSnapshots(); });
+app.post('/api/refresh-all', (req, res) => {
+  res.json({ ok: true });
+  recordPriceSnapshots();
+});
 
+
+// ✅ POPRAWIONY ENDPOINT WYSZUKIWANIA
 app.get('/api/search', async (req, res) => {
   const q = req.query.q;
   if (!q) return res.status(400).json({ error: 'q required' });
@@ -145,7 +200,6 @@ app.get('/api/search', async (req, res) => {
       timeout: 12000
     });
 
-    // Steam czasem zwraca HTML — fallback
     if (typeof response.data !== 'object' || !response.data.results) {
       console.error("Steam returned HTML instead of JSON");
       return res.json([]);
@@ -168,16 +222,14 @@ app.get('/api/search', async (req, res) => {
   }
 });
 
-    res.json(items);
 
-  } catch (e) {
-    console.error("Steam search error:", e.message);
-    res.status(502).json({ error: 'Steam search failed' });
-  }
-});
+app.get('/api/health', (req, res) =>
+  res.json({ ok: true, items: loadData().watchlist.length, time: new Date().toISOString() })
+);
 
-app.get('/api/health', (req, res) => res.json({ ok: true, items: loadData().watchlist.length, time: new Date().toISOString() }));
-app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+app.get('*', (req, res) =>
+  res.sendFile(path.join(__dirname, 'public', 'index.html'))
+);
 
 cron.schedule('0 * * * *', recordPriceSnapshots);
 
