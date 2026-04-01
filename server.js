@@ -406,7 +406,7 @@ app.get('/api/search', async (req, res) => {
     const items = response.data.results.map(i => ({
       name: i.name,
       marketHashName: i.hash_name,
-      price: normalizeSteamPrice(i.sell_price_text || null),
+      price: i.sell_price ? i.sell_price / 100 : null,  // sell_price to grosze (integer)
       imageUrl: i.asset_description?.icon_url
         ? `https://community.cloudflare.steamstatic.com/economy/image/${i.asset_description.icon_url}/96fx96f`
         : null
