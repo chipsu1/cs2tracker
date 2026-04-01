@@ -1596,9 +1596,9 @@
       btn.disabled = true;
       btn.textContent = 'Dodawanie...';
       try {
-      const r = await fetch(`${API}/watchlist`, {
+ const r = await fetch(`${API}/watchlist`, {
   method: 'POST',
-  headers: { 'Content-Type': 'application/json', ...authHeaders() },  // ← fix #1
+  headers: { 'Content-Type': 'application/json', ...authHeaders() },
   body: JSON.stringify({
     name: mSelected.name,
     marketHashName: mSelected.marketHashName,
