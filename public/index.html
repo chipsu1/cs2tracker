@@ -456,8 +456,39 @@
 
 <div class="toast-wrap" id="toasts"></div>
 
+<!-- MODAL: potwierdzenie -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal" style="width:380px;text-align:center">
+    <div style="font-size:32px;margin-bottom:12px" id="confirmIcon">🗑️</div>
+    <div class="modal-title" style="justify-content:center;font-size:16px" id="confirmTitle">Potwierdź</div>
+    <div style="font-size:13px;color:var(--sub);margin-bottom:24px;line-height:1.6" id="confirmMsg">Czy na pewno?</div>
+    <div class="mbtns" style="justify-content:center;gap:12px">
+      <button class="btn ghost" style="min-width:100px" onclick="confirmResolve(false)">Anuluj</button>
+      <button class="btn danger" style="min-width:100px" id="confirmOkBtn" onclick="confirmResolve(true)">Usuń</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const API = '/api';
+
+// ── CONFIRM DIALOG ──
+let confirmResolve = null;
+function confirmDialog({ title = 'Potwierdź', msg = 'Czy na pewno?', icon = '🗑️', okLabel = 'Usuń' } = {}) {
+  return new Promise(resolve => {
+    $('confirmTitle').textContent = title;
+    $('confirmMsg').textContent = msg;
+    $('confirmIcon').textContent = icon;
+    $('confirmOkBtn').textContent = okLabel;
+    confirmResolve = ok => {
+      $('confirm-modal').classList.remove('show');
+      resolve(ok);
+    };
+    $('confirm-modal').classList.add('show');
+  });
+}
+$('confirm-modal').addEventListener('click', e => { if (e.target === $('confirm-modal')) confirmResolve(false); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('confirm-modal').classList.contains('show')) confirmResolve(false); });
 let items = [], activeId = null, chart = null, chartRange = '7d', fullHistory = [];
 let mSelected = null, mSearchT = null, topSearchT = null;
 const searchCache = {};
@@ -752,7 +783,8 @@ async function addPurchase(wid) {
 }
 
 async function deletePurchase(wid, pid) {
-  if (!confirm('Usunąć ten zakup?')) return;
+  const ok = await confirmDialog({ title: 'Usuń zakup', msg: 'Czy na pewno chcesz usunąć ten wpis zakupu?', icon: '🗑️', okLabel: 'Usuń zakup' });
+  if (!ok) return;
   try {
     const r = await fetch(`${API}/purchases/${wid}/${pid}`, { method: 'DELETE', headers: authHeaders() });
     if (!r.ok) throw new Error();
@@ -935,7 +967,8 @@ async function refreshAll() {
 
 async function deleteItem(e, id) {
   e.stopPropagation(); id = Number(id);
-  if (!confirm('Usunąć ten przedmiot z obserwowanych?')) return;
+  const ok = await confirmDialog({ title: 'Usuń przedmiot', msg: `Usunąć "${items.find(w=>w.id===id)?.name || 'ten przedmiot'}" z obserwowanych?`, icon: '⚠️', okLabel: 'Usuń' });
+  if (!ok) return;
   try {
     await fetch(`${API}/watchlist/${id}`, { method: 'DELETE', headers: authHeaders() });
     if (activeId === id) { activeId = null; showEmpty(); }
