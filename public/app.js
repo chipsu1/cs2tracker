@@ -57,10 +57,14 @@ async function loadWatchlist() {
   });
 
   // Jeśli nie ma tokena → pokaż modal logowania
-  if (res.status === 401) {
-    document.getElementById("auth-modal").classList.add("show");
-    return;
-  }
+if (res.status === 401) {
+  const modal = document.getElementById("auth-modal");
+  modal.style.display = "flex";
+  modal.style.alignItems = "center";
+  modal.style.justifyContent = "center";
+  return;
+}
+
 
   const items = await res.json();
   console.log("WATCHLIST:", items);
