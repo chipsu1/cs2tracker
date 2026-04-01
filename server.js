@@ -13,6 +13,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// ───────────────── helpers / storage ─────────────────
 function loadData() {
   if (!fs.existsSync(DATA_FILE)) return { watchlist: [], priceHistory: {} };
   try { return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')); }
@@ -24,8 +25,19 @@ function saveData(data) {
   catch (e) { console.error('Save error:', e.message); }
 }
 
+// Steam → liczba PLN (np. "67,35 zł" → 67.35)
+function normalizeSteamPrice(str) {
+  if (!str) return null;
+  let cleaned = str.replace(/[^\d.,-]/g, '');
+  cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+  const val = parseFloat(cleaned);
+  return isNaN(val) ? null : val;
+}
+
+// ───────────────── Steam priceoverview (watchlista / snapshoty) ─────────────────
 async function fetchSteamPrice(itemName) {
   const encoded = encodeURIComponent(itemName);
+  // currency=6 → PLN
   const url = `https://steamcommunity.com/market/priceoverview/?appid=730&currency=6&market_hash_name=${encoded}`;
   try {
     const response = await axios.get(url, {
@@ -38,17 +50,15 @@ async function fetchSteamPrice(itemName) {
     });
     const d = response.data;
     if (!d.success) return null;
-    const parsePrice = (str) => {
-      if (!str) return null;
-      const cleaned = str.replace(/[^\d.,]/g, '');
-      const normalized = cleaned.replace(/\.(?=\d{3})/g, '').replace(',', '.');
-      return parseFloat(normalized) || null;
-    };
+
+    const lowest = normalizeSteamPrice(d.lowest_price);
+    const median = normalizeSteamPrice(d.median_price);
+    const volume = parseInt((d.volume || '0').replace(/[^\d]/g, '')) || 0;
+
     return {
-      lowest_price: parsePrice(d.lowest_price),
-      median_price: parsePrice(d.median_price),
-      volume: parseInt((d.volume || '0').replace(/[^\d]/g, '')) || 0,
-      lowest_price_raw: d.lowest_price || '—',
+      lowest_price: lowest,      // liczba PLN
+      median_price: median,      // liczba PLN
+      volume,
       timestamp: Date.now(),
     };
   } catch (e) {
@@ -57,6 +67,7 @@ async function fetchSteamPrice(itemName) {
   }
 }
 
+// ───────────────── snapshoty co godzinę ─────────────────
 async function recordPriceSnapshots() {
   const data = loadData();
   if (!data.watchlist.length) return;
@@ -74,6 +85,7 @@ async function recordPriceSnapshots() {
       });
       if (data.priceHistory[item.id].length > 720)
         data.priceHistory[item.id] = data.priceHistory[item.id].slice(-720);
+
       item.currentPrice = price.lowest_price;
       item.currentMedian = price.median_price;
       item.currentVolume = price.volume;
@@ -83,6 +95,7 @@ async function recordPriceSnapshots() {
   saveData(data);
 }
 
+// ───────────────── API: watchlista ─────────────────
 app.get('/api/watchlist', (req, res) => res.json(loadData().watchlist));
 
 app.post('/api/watchlist', async (req, res) => {
@@ -99,10 +112,10 @@ app.post('/api/watchlist', async (req, res) => {
     id: Date.now().toString(),
     name,
     marketHashName,
-    buyPrice: buyPrice || null,
+    buyPrice: buyPrice || null,          // liczba PLN lub null
     imageUrl: imageUrl || null,
-    currentPrice: price?.lowest_price || null,
-    currentMedian: price?.median_price || null,
+    currentPrice: price?.lowest_price || null,   // liczba PLN
+    currentMedian: price?.median_price || null,  // liczba PLN
     currentVolume: price?.volume || 0,
     lastUpdated: price?.timestamp || null,
     addedAt: Date.now()
@@ -147,10 +160,12 @@ app.delete('/api/watchlist/:id', (req, res) => {
   res.json({ ok: true });
 });
 
+// ───────────────── API: historia ─────────────────
 app.get('/api/history/:id', (req, res) =>
   res.json(loadData().priceHistory[req.params.id] || [])
 );
 
+// ───────────────── API: refresh jednego ─────────────────
 app.post('/api/refresh/:id', async (req, res) => {
   const data = loadData();
   const item = data.watchlist.find(w => w.id === req.params.id);
@@ -176,13 +191,13 @@ app.post('/api/refresh/:id', async (req, res) => {
   res.json({ item, price });
 });
 
+// ───────────────── API: refresh-all ─────────────────
 app.post('/api/refresh-all', (req, res) => {
   res.json({ ok: true });
   recordPriceSnapshots();
 });
 
-
-// ✅ POPRAWIONY ENDPOINT WYSZUKIWANIA (działa na Railway)
+// ───────────────── API: search (PLN, bez $) ─────────────────
 app.get('/api/search', async (req, res) => {
   const q = req.query.q;
   if (!q) return res.status(400).json({ error: 'q required' });
@@ -200,19 +215,23 @@ app.get('/api/search', async (req, res) => {
       timeout: 12000
     });
 
-    if (typeof response.data !== 'object' || !response.data.results) {
-      console.error("Steam returned HTML instead of JSON");
+    if (!response.data || !response.data.results) {
       return res.json([]);
     }
 
-    const items = response.data.results.map(i => ({
-      name: i.name,
-      marketHashName: i.hash_name,
-      price: i.sell_price_text,
-      imageUrl: i.asset_description?.icon_url
-        ? `https://community.cloudflare.steamstatic.com/economy/image/${i.asset_description.icon_url}/96fx96f`
-        : null
-    }));
+    const items = response.data.results.map(i => {
+      const raw = i.sell_price_text || null;
+      const numeric = normalizeSteamPrice(raw); // liczba PLN
+
+      return {
+        name: i.name,
+        marketHashName: i.hash_name,
+        price: numeric, // liczba PLN, frontend formatuje jako "xx,xx zł"
+        imageUrl: i.asset_description?.icon_url
+          ? `https://community.cloudflare.steamstatic.com/economy/image/${i.asset_description.icon_url}/96fx96f`
+          : null
+      };
+    });
 
     res.json(items);
 
@@ -222,7 +241,7 @@ app.get('/api/search', async (req, res) => {
   }
 });
 
-
+// ───────────────── health + SPA fallback ─────────────────
 app.get('/api/health', (req, res) =>
   res.json({ ok: true, items: loadData().watchlist.length, time: new Date().toISOString() })
 );
@@ -231,6 +250,7 @@ app.get('*', (req, res) =>
   res.sendFile(path.join(__dirname, 'public', 'index.html'))
 );
 
+// ───────────────── cron ─────────────────
 cron.schedule('0 * * * *', recordPriceSnapshots);
 
 app.listen(PORT, () => {
