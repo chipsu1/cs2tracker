@@ -898,10 +898,35 @@
       <div class="mbtns">
         <button class="btn ghost" onclick="closeAuthModal()">Anuluj</button>
         <button class="btn" onclick="login()">Zaloguj</button>
+        <button class="btn gold" onclick="openRegisterModal()">Rejestracja</button>
       </div>
     </div>
   </div>
+  <div class="modal-overlay" id="register-modal">
+  <div class="modal">
+    <div class="modal-title">Rejestracja</div>
 
+    <div class="mrow">
+      <div class="mlbl">Email</div>
+      <input id="reg-email" class="minp" type="email" placeholder="email@example.com" autocomplete="email" />
+    </div>
+
+    <div class="mrow">
+      <div class="mlbl">Hasło</div>
+      <input id="reg-password" class="minp" type="password" placeholder="••••••••" autocomplete="new-password" />
+    </div>
+
+    <div class="mrow">
+      <div class="mlbl">Powtórz hasło</div>
+      <input id="reg-password2" class="minp" type="password" placeholder="••••••••" autocomplete="new-password" />
+    </div>
+
+    <div class="mbtns">
+      <button class="btn ghost" onclick="closeRegisterModal()">Anuluj</button>
+      <button class="btn gold" onclick="registerUser()">Utwórz konto</button>
+    </div>
+  </div>
+</div>
   <div class="toast-wrap" id="toasts"></div>
 
   <script>
@@ -1675,6 +1700,56 @@
         toast('Błąd połączenia przy logowaniu', 'err');
       }
     }
+    function openRegisterModal() {
+  $('reg-email').value = '';
+  $('reg-password').value = '';
+  $('reg-password2').value = '';
+  $('register-modal').classList.add('show');
+  setTimeout(() => $('reg-email').focus(), 80);
+}
+
+function closeRegisterModal() {
+  $('register-modal').classList.remove('show');
+}
+
+$('register-modal').addEventListener('click', e => {
+  if (e.target === $('register-modal')) closeRegisterModal();
+});
+
+async function registerUser() {
+  const email = $('reg-email').value.trim();
+  const pass1 = $('reg-password').value;
+  const pass2 = $('reg-password2').value;
+
+  if (!email || !pass1 || !pass2) {
+    toast('Wypełnij wszystkie pola', 'err');
+    return;
+  }
+
+  if (pass1 !== pass2) {
+    toast('Hasła nie są takie same', 'err');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: pass1 })
+    });
+
+    if (!res.ok) {
+      toast('Nie udało się utworzyć konta', 'err');
+      return;
+    }
+
+    toast('Konto utworzone ✓', 'ok');
+    closeRegisterModal();
+    openAuthModal(); // od razu otwieramy logowanie
+  } catch {
+    toast('Błąd połączenia', 'err');
+  }
+}
 
     // init
     checkStatus();
