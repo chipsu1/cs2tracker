@@ -99,7 +99,8 @@
       cursor: pointer; transition: border-color .2s, background .2s;
       position: relative;
     }
-    .user-badge:hover { border-color: var(--accent); background: var(--panel2); }
+    .user-badge:hover { border-color: var(--border2); background: var(--panel); }
+    .user-badge.open { border-color: var(--accent); background: var(--panel2); }
     .user-avatar {
       width: 24px; height: 24px; border-radius: 50%;
       background: linear-gradient(135deg, var(--accent), #2060b0);
@@ -117,8 +118,11 @@
       border-radius: 8px; min-width: 160px; display: none;
       z-index: 200; overflow: hidden;
     }
-    .user-badge:hover .user-dropdown,
     .user-badge.open .user-dropdown { display: block; }
+    .user-badge.open::after {
+      content: ''; position: absolute;
+      top: 100%; left: 0; right: 0; height: 8px;
+    }
     .user-dropdown-item {
       padding: 9px 14px; font-size: 12px; color: var(--muted2);
       cursor: pointer; transition: background .15s, color .15s;
