@@ -204,7 +204,8 @@ async function getWatchlistItem(watchlistId, userId) {
 // Pomocnik do agregacji zakupów (dla GET /api/watchlist)
 async function enrichWithPurchases(row) {
   const purch = await pool.query(
-    `SELECT quantity, buy_price AS "buyPrice" FROM purchases WHERE watchlist_id = $1`,
+    `SELECT id, quantity, buy_price AS "buyPrice", bought_at AS "boughtAt", note
+     FROM purchases WHERE watchlist_id = $1 ORDER BY bought_at ASC`,
     [row.id]
   );
   const purchases = purch.rows;
@@ -214,6 +215,7 @@ async function enrichWithPurchases(row) {
   const currentPrice = row.currentPrice ? parseFloat(row.currentPrice) : null;
   return {
     ...row,
+    purchases,  // ← tablica zakupów do wyświetlenia w tabeli
     totalQty,
     totalSpent: totalQty > 0 ? totalSpent : null,
     avgBuyPrice,
