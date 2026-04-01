@@ -1,11 +1,19 @@
+/* ─────────────────────────────────────────────
+   MODAL LOGOWANIA
+   ───────────────────────────────────────────── */
+
 .modal {
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.6);
-  display: flex;
+  display: none;              /* domyślnie ukryty */
   align-items: center;
   justify-content: center;
   z-index: 9999;
+}
+
+.modal.show {
+  display: flex;              /* pokazuje modal */
 }
 
 .modal-content {
@@ -13,11 +21,31 @@
   padding: 20px;
   border-radius: 8px;
   width: 300px;
+  color: white;
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
 }
 
-.modal input {
+.modal-content input {
   width: 100%;
   margin-bottom: 10px;
   padding: 8px;
+  border: none;
+  border-radius: 4px;
+  background: #2a2a2a;
+  color: white;
 }
-s
+
+.modal-content button {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  border: none;
+  border-radius: 4px;
+  background: #3a3a3a;
+  color: white;
+  cursor: pointer;
+}
+
+.modal-content button:hover {
+  background: #505050;
+}
