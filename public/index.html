@@ -687,9 +687,10 @@ function renderMain(item) {
       <div class="chart-hdr">
         <div class="card-title" style="margin:0">Historia cen (PLN)</div>
         <div class="chart-tabs">
-          <div class="ctab ${chartRange==='24h'?'active':''}" onclick="setRange('24h')">24h</div>
-          <div class="ctab ${chartRange==='7d'?'active':''}" onclick="setRange('7d')">7 dni</div>
-          <div class="ctab ${chartRange==='30d'?'active':''}" onclick="setRange('30d')">30 dni</div>
+          <div class="ctab ${chartRange==='1d'?'active':''}" onclick="setRange('1d')">1d</div>
+          <div class="ctab ${chartRange==='7d'?'active':''}" onclick="setRange('7d')">7d</div>
+          <div class="ctab ${chartRange==='30d'?'active':''}" onclick="setRange('30d')">30d</div>
+          <div class="ctab ${chartRange==='180d'?'active':''}" onclick="setRange('180d')">180d</div>
         </div>
       </div>
       <div class="chart-area"><canvas id="chartCanvas"></canvas></div>
@@ -769,13 +770,7 @@ function svgPlaceholder() {
 function setRange(range) {
   chartRange = range;
   document.querySelectorAll('.ctab').forEach(t => {
-    t.className = 'ctab' + (['24h','7d','30d'].find(r => r === t.textContent.trim().replace(' dni','d').replace('7 dni','7d').replace('30 dni','30d')) === range ? ' active' : '');
-  });
-  // easier matching:
-  document.querySelectorAll('.ctab').forEach(t => {
-    const label = t.textContent.trim();
-    const match = (range==='24h'&&label==='24h')||(range==='7d'&&label==='7 dni')||(range==='30d'&&label==='30 dni');
-    t.className = 'ctab' + (match ? ' active' : '');
+    t.className = 'ctab' + (t.textContent.trim() === range ? ' active' : '');
   });
   renderChart();
 }
@@ -785,31 +780,34 @@ function renderChart() {
   const canvas = $('chartCanvas');
   if (!canvas) return;
 
-  const cutoffs = { '24h': Date.now() - 864e5, '7d': Date.now() - 7*864e5, '30d': Date.now() - 30*864e5 };
+  const DAY = 864e5;
+  const cutoffs = { '1d': Date.now() - DAY, '7d': Date.now() - 7*DAY, '30d': Date.now() - 30*DAY, '180d': Date.now() - 180*DAY };
   let filtered = fullHistory.filter(h => h.ts >= (cutoffs[chartRange] || 0));
 
-  // Jeśli brak danych historycznych ale mamy aktualną cenę — wygeneruj punkty
-  if (!filtered.length && fullHistory.length > 0) {
-    filtered = fullHistory;
+  // Gdy brak danych w wybranym zakresie — pokaż całą dostępną historię
+  if (!filtered.length && fullHistory.length > 0) filtered = fullHistory;
+
+  // Gdy tylko 1 punkt — zduplikuj go żeby Chart.js wyrysował linię
+  if (filtered.length === 1) {
+    filtered = [
+      { ...filtered[0], ts: filtered[0].ts - DAY },
+      filtered[0]
+    ];
   }
 
   if (!filtered.length) {
-    // Brak historii w ogóle
-    const canvas2 = $('chartCanvas');
-    if (canvas2) {
-      const ctx = canvas2.getContext('2d');
-      ctx.clearRect(0, 0, canvas2.width, canvas2.height);
-      ctx.fillStyle = '#4a5870';
-      ctx.font = '13px JetBrains Mono,monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText('Ceny gromadzone co 1h — wróć jutro po więcej danych', canvas2.width / 2, 110);
-    }
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#4a5870';
+    ctx.font = '13px JetBrains Mono,monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('Ceny zbierane co 1h — dane pojawią się wkrótce', canvas.width / 2, 110);
     return;
   }
 
   const labels = filtered.map(h => {
     const d = new Date(h.ts);
-    return chartRange === '24h'
+    return chartRange === '1d'
       ? d.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })
       : d.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit' });
   });
@@ -833,7 +831,7 @@ function renderChart() {
             return g;
           },
           borderWidth: 2,
-          pointRadius: filtered.length > 48 ? 0 : 3,
+          pointRadius: filtered.length > 72 ? 0 : 3,
           pointHoverRadius: 5,
           pointHoverBackgroundColor: `rgb(${goldRgb})`,
           pointHoverBorderColor: '#fff',
@@ -875,11 +873,7 @@ function renderChart() {
         },
         y: {
           grid: { color: 'rgba(255,255,255,.05)' },
-          ticks: {
-            color: '#4a5870',
-            font: { size: 11, family: 'JetBrains Mono' },
-            callback: v => fmtN(v) + ' zł'
-          }
+          ticks: { color: '#4a5870', font: { size: 11, family: 'JetBrains Mono' }, callback: v => fmtN(v) + ' zł' }
         }
       }
     }
