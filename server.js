@@ -132,8 +132,8 @@ app.get('/api/search', async (req, res) => {
   const q = req.query.q;
   if (!q) return res.status(400).json({ error: 'q required' });
   try {
-    const url = `https://steamcommunity.com/market/search/render/?query=${encodeURIComponent(q)}&appid=730&search_descriptions=0&sort_column=popular&sort_dir=desc&currency=1&count=10`;
-    const response = await axios.get(url, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'Referer': 'https://steamcommunity.com/market/' }, timeout: 12000 });
+    const url = `https://steamcommunity.com/market/search/render/?query=${encodeURIComponent(q)}&appid=730&search_descriptions=0&sort_column=popular&sort_dir=desc&currency=1&count=10&format=json`;
+    const response = await axios.get(url, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'Referer': 'https://steamcommunity.com/market/', 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }, timeout: 12000 });
     const items = (response.data?.results || []).map(i => ({ name: i.name, marketHashName: i.hash_name, price: i.sell_price_text, imageUrl: i.asset_description?.icon_url ? `https://community.cloudflare.steamstatic.com/economy/image/${i.asset_description.icon_url}/96fx96f` : null }));
     res.json(items);
   } catch (e) { res.status(502).json({ error: 'Steam search failed' }); }
