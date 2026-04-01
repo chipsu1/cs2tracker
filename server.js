@@ -282,6 +282,22 @@ app.get('/api/watchlist', auth, async (req, res) => {
        ORDER BY w.created_at DESC`,
       [req.userId]
     );
+
+    // Dla itemów bez ceny — pobierz w tle (nie blokuj odpowiedzi)
+    result.rows.forEach(row => {
+      if (!row.currentPrice) {
+        fetchSteamPrice(row.market_hash).then(price => {
+          if (price) {
+            pool.query(
+              `INSERT INTO prices (item_id, lowest_price, median_price, volume, fetched_at)
+               SELECT i.id, $2, $3, $4, NOW() FROM items i WHERE i.market_hash = $1`,
+              [row.market_hash, price.lowest_price, price.median_price, price.volume]
+            ).catch(e => console.error('bg price insert error:', e.message));
+          }
+        }).catch(() => {});
+      }
+    });
+
     const rows = await Promise.all(result.rows.map(enrichWithPurchases));
     res.json(rows);
   } catch (e) {
