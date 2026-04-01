@@ -58,15 +58,14 @@ async function loadWatchlist() {
 
   // Jeśli nie ma tokena → pokaż modal logowania
   if (res.status === 401) {
-    document.getElementById("auth-modal").style.display = "flex";
+    document.getElementById("auth-modal").classList.add("show");
     return;
   }
 
   const items = await res.json();
   console.log("WATCHLIST:", items);
 
-  // TODO: tutaj możesz zrobić renderowanie listy
-  // Na razie tylko wypisujemy do konsoli
+  // TODO: renderowanie listy
 }
 
 // ─────────────────────────────────────────────
