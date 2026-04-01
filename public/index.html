@@ -973,7 +973,8 @@ async function refreshAll() {
 
 async function deleteItem(e, id) {
   e.stopPropagation(); id = Number(id);
-  const ok = await confirmDialog({ title: 'Usuń przedmiot', msg: `Usunąć "${items.find(w=>w.id===id)?.name || 'ten przedmiot'}" z obserwowanych?`, icon: '⚠️', okLabel: 'Usuń' });
+  const itemName = items.find(w => w.id === id)?.name || 'ten przedmiot';
+  const ok = await confirmDialog({ title: 'Usuń przedmiot', msg: 'Usunąć ' + itemName + ' z obserwowanych?', icon: '⚠️', okLabel: 'Usuń' });
   if (!ok) return;
   try {
     await fetch(`${API}/watchlist/${id}`, { method: 'DELETE', headers: authHeaders() });
