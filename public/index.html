@@ -487,13 +487,23 @@ function confirmDialog({ title = 'Potwierdź', msg = 'Czy na pewno?', icon = '�
     $('confirm-modal').classList.add('show');
   });
 }
-$('confirm-modal').addEventListener('click', e => { if (e.target === $('confirm-modal')) confirmResolve(false); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('confirm-modal').classList.contains('show')) confirmResolve(false); });
 let items = [], activeId = null, chart = null, chartRange = '7d', fullHistory = [];
 let mSelected = null, mSearchT = null, topSearchT = null;
 const searchCache = {};
 
 const $ = id => document.getElementById(id);
+const fmt  = p => p != null ? parseFloat(p).toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' zł' : '—';
+const fmtN = p => p != null ? parseFloat(p).toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—';
+const fmtPct = p => (p >= 0 ? '+' : '') + parseFloat(p).toFixed(2) + '%';
+const fmtDate = ts => new Date(ts).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: '2-digit' });
+
+// Eventy dla confirm modala — muszą być po definicji $
+document.addEventListener('click', e => {
+  if (e.target && e.target.id === 'confirm-modal' && confirmResolve) confirmResolve(false);
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.getElementById('confirm-modal')?.classList.contains('show') && confirmResolve) confirmResolve(false);
+});
 const fmt  = p => p != null ? parseFloat(p).toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' zł' : '—';
 const fmtN = p => p != null ? parseFloat(p).toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—';
 const fmtPct = p => (p >= 0 ? '+' : '') + parseFloat(p).toFixed(2) + '%';
