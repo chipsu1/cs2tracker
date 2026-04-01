@@ -605,7 +605,7 @@ function renderSidebar() {
       <div class="wcard ${item.id === activeId ? 'active' : ''}" onclick="selectItem(${item.id})">
         <div class="wc-name">${item.name}</div>
         <div class="wc-price-row">
-          <span class="wc-price">${fmt(item.currentPrice)}</span>
+          <span class="wc-price">${item.currentPrice ? fmt(item.currentPrice) : '<span style="color:var(--dim);font-size:11px;font-family:var(--mono)">brak ceny</span>'}</span>
           ${pct != null ? `<span class="wc-pct ${cls}">${arr} ${Math.abs(pct).toFixed(1)}%</span>` : ''}
         </div>
         ${item.totalQty > 0 ? `
@@ -735,7 +735,12 @@ function renderMain(item) {
     </div>
 
     <div class="actions-row">
-      <button class="btn ghost sm" onclick="refreshOne(${item.id})">⟳ Odśwież cenę</button>
+      ${!item.currentPrice ? `
+        <div style="display:flex;align-items:center;gap:12px;background:rgba(245,200,66,.07);border:1px solid rgba(245,200,66,.2);border-radius:10px;padding:10px 16px;font-size:12px;color:var(--sub)">
+          ⚠️ Brak danych cenowych — Steam nie odpowiedział przy dodawaniu
+          <button class="btn sm" onclick="refreshOne(${item.id})" style="white-space:nowrap">⟳ Pobierz teraz</button>
+        </div>` : `
+        <button class="btn ghost sm" onclick="refreshOne(${item.id})">⟳ Odśwież cenę</button>`}
     </div>`;
 }
 
