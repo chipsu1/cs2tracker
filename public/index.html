@@ -1161,9 +1161,30 @@
   $('reg-password2').addEventListener('keydown', e => { if (e.key === 'Enter') registerUser(); });
 
   // ── INIT ──
+  // Sprawdź token przy starcie — jeśli nieważny, wyczyść localStorage
+  async function validateTokenAndInit() {
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const r = await fetch(API + '/watchlist', { headers: authHeaders() });
+        if (r.status === 401) {
+          // Token wygasł lub nieważny — wyloguj cicho
+          localStorage.removeItem('token');
+          localStorage.removeItem('userEmail');
+        } else {
+          items = await r.json();
+          $('cnt').textContent = items.length;
+          renderSidebar();
+        }
+      } catch {
+        // Brak połączenia — zachowaj token, spróbuj potem
+      }
+    }
+    updateAuthUI();
+  }
+
   checkStatus();
-  updateAuthUI();
-  loadWatchlist();
+  validateTokenAndInit();
   setInterval(checkStatus, 30000);
   setInterval(loadWatchlist, 300000);
 </script>
