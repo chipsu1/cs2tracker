@@ -683,6 +683,17 @@ loadWatchlist();
 setInterval(checkStatus, 30000);
 setInterval(loadWatchlist, 300000);
 </script>
+  <div id="auth-modal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <h2>Zaloguj się</h2>
+
+    <input id="auth-email" type="email" placeholder="Email">
+    <input id="auth-password" type="password" placeholder="Hasło">
+
+    <button onclick="login()">Zaloguj</button>
+    <button onclick="register()">Zarejestruj</button>
+  </div>
+</div>
 </body>
 </html>
 ```
