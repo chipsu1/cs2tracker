@@ -11,19 +11,19 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg:      #07090f;
-      --s1:      #0d1119;
-      --s2:      #111827;
-      --s3:      #1a2235;
-      --border:  rgba(255,255,255,0.06);
-      --border2: rgba(255,255,255,0.11);
+      --bg:      #08090e;
+      --s1:      #0e1017;
+      --s2:      #13161f;
+      --s3:      #1a1e2a;
+      --border:  rgba(255,255,255,0.05);
+      --border2: rgba(255,255,255,0.09);
       --accent:  #4f9cf9;
       --gold:    #f5c842;
-      --green:   #22d87a;
-      --red:     #f05252;
-      --text:    #e8f0fe;
-      --sub:     #8899bb;
-      --dim:     #4a5870;
+      --green:   #1db96a;
+      --red:     #e84040;
+      --text:    #d8e0f0;
+      --sub:     #6b7a99;
+      --dim:     #3d4a60;
       --mono: 'JetBrains Mono', monospace;
       --head: 'Rajdhani', sans-serif;
       --body: 'Inter', sans-serif;
@@ -79,7 +79,7 @@
     .sdrop-item:hover { background: var(--s3); }
     .sdrop-item img { width: 46px; height: 34px; object-fit: contain; border-radius: 4px; }
     .sdrop-name { font-size: 12px; font-weight: 500; color: var(--text); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .sdrop-price { font-size: 12px; color: var(--gold); font-family: var(--mono); font-weight: 500; white-space: nowrap; }
+    .sdrop-price { font-size: 12px; color: var(--sub); font-family: var(--mono); font-weight: 500; white-space: nowrap; }
     .sdrop-add { font-size: 11px; color: var(--accent); white-space: nowrap; padding: 2px 8px; border: 1px solid rgba(79,156,249,.3); border-radius: 4px; }
     .search-hint { padding: 14px; font-size: 12px; color: var(--sub); text-align: center; }
     .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
@@ -179,8 +179,8 @@
       display: flex; align-items: baseline; gap: 5px;
       grid-column: 1; grid-row: 2;
     }
-    .wc-price { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--gold); }
-    .wc-pct { font-family: var(--mono); font-size: 10px; font-weight: 500; }
+    .wc-price { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--text); }
+    .wc-pct { font-family: var(--mono); font-size: 10px; font-weight: 500; color: var(--sub); }
     .wc-pnl-col {
       grid-column: 2; grid-row: 1 / 3;
       text-align: right; display: flex; flex-direction: column; gap: 2px; align-items: flex-end;
@@ -243,7 +243,7 @@
     .wear-bs { background: rgba(240,82,82,.12); color: var(--red); }
     .item-platform { font-size: 12px; color: var(--dim); font-family: var(--mono); }
     .price-block { text-align: right; flex-shrink: 0; }
-    .price-big { font-family: var(--mono); font-size: 38px; font-weight: 600; color: var(--gold); line-height: 1; letter-spacing: -0.01em; }
+    .price-big { font-family: var(--mono); font-size: 36px; font-weight: 600; color: var(--text); line-height: 1; letter-spacing: -0.01em; }
     .price-change { font-family: var(--mono); font-size: 13px; margin-top: 6px; }
 
     /* ── STATS ROW ── */
@@ -251,7 +251,7 @@
     .stat-card { background: var(--s2); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
     .stat-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); margin-bottom: 10px; }
     .stat-value { font-family: var(--mono); font-size: 20px; font-weight: 600; color: var(--text); }
-    .stat-value.gold { color: var(--gold); }
+    .stat-value.gold { color: var(--text); }
 
     /* ── PORTFOLIO BOX ── */
     .pf-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; }
@@ -261,9 +261,9 @@
     }
     .pf-cell:last-child { border-right: none; }
     .pf-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); }
-    .pf-value { font-family: var(--mono); font-size: 18px; font-weight: 600; }
-    .pf-value.accent { color: var(--accent); }
-    .pf-value.gold { color: var(--gold); }
+    .pf-value { font-family: var(--mono); font-size: 18px; font-weight: 600; color: var(--text); }
+    .pf-value.accent { color: var(--text); }
+    .pf-value.gold { color: var(--text); }
 
     /* ── PURCHASES ── */
     .purch-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
@@ -285,8 +285,8 @@
     }
     table.pt tbody tr:last-child td { border-bottom: none; }
     table.pt td.r { text-align: right; }
-    .pt-qty { font-family: var(--mono); font-size: 15px; font-weight: 600; color: var(--accent); }
-    .pt-price { font-family: var(--mono); font-size: 14px; font-weight: 500; color: var(--gold); }
+    .pt-qty { font-family: var(--mono); font-size: 15px; font-weight: 600; color: var(--text); }
+    .pt-price { font-family: var(--mono); font-size: 14px; font-weight: 500; color: var(--text); }
     .pt-cost { font-family: var(--mono); font-size: 13px; color: var(--sub); }
     .pt-value { font-family: var(--mono); font-size: 13px; color: var(--text); }
     .pt-pnl { font-family: var(--mono); font-size: 13px; font-weight: 600; }
@@ -345,7 +345,7 @@
     .msr-item:hover { background: var(--s3); }
     .msr-item img { width: 46px; height: 34px; object-fit: contain; border-radius: 4px; }
     .msr-name { flex: 1; font-size: 13px; color: var(--text); min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .msr-price { font-size: 13px; font-family: var(--mono); font-weight: 500; color: var(--gold); }
+    .msr-price { font-size: 13px; font-family: var(--mono); font-weight: 500; color: var(--sub); }
     .selected-pill { background: rgba(79,156,249,.1); border: 1px solid rgba(79,156,249,.35); border-radius: 8px; padding: 10px 14px; font-size: 14px; font-weight: 500; color: var(--accent); font-family: var(--body); }
 
     /* ── UTILS ── */
@@ -395,9 +395,9 @@
     table.ht tbody tr:last-child td { border-bottom: none; }
     table.ht td.r { text-align: right; }
     .ht-name { font-size: 13px; font-weight: 500; color: var(--text); max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .ht-price { font-family: var(--mono); font-size: 13px; color: var(--gold); font-weight: 500; }
-    .ht-pct { font-family: var(--mono); font-size: 11px; }
-    .ht-qty { font-family: var(--mono); font-size: 12px; color: var(--accent); }
+    .ht-price { font-family: var(--mono); font-size: 13px; color: var(--text); font-weight: 500; }
+    .ht-pct { font-family: var(--mono); font-size: 11px; color: var(--sub); }
+    .ht-qty { font-family: var(--mono); font-size: 12px; color: var(--sub); }
     .ht-cost { font-family: var(--mono); font-size: 12px; color: var(--sub); }
     .ht-val { font-family: var(--mono); font-size: 12px; color: var(--text); }
     .ht-pnl { font-family: var(--mono); font-size: 12px; font-weight: 600; }
@@ -688,7 +688,7 @@ function renderPortfolioSummary() {
     <div class="portfolio-summary" id="portfolioSummary">
       <div class="ps-cell">
         <div class="ps-label">Pozycje</div>
-        <div class="ps-value" style="color:var(--accent)">${withPos.length} <span style="font-size:14px;color:var(--sub)">/ ${items.length}</span></div>
+        <div class="ps-value">${withPos.length} <span style="font-size:14px;color:var(--sub)">/ ${items.length}</span></div>
         <div class="ps-sub">${totalUnits.toLocaleString('pl-PL')} szt. łącznie</div>
       </div>
       <div class="ps-cell">
@@ -698,7 +698,7 @@ function renderPortfolioSummary() {
       </div>
       <div class="ps-cell">
         <div class="ps-label">Wartość portfela</div>
-        <div class="ps-value" style="color:var(--gold)">${fmt(totalValue)}</div>
+        <div class="ps-value">${fmt(totalValue)}</div>
         <div class="ps-sub">wg aktualnych cen</div>
       </div>
       <div class="ps-cell">
@@ -730,7 +730,7 @@ function renderHomeDashboard() {
         </td>
         <td class="r"><span class="ht-price">${i.currentPrice ? fmt(i.currentPrice) : '<span class="nu">—</span>'}</span></td>
         <td class="r">
-          ${pct != null ? `<span class="ht-pct ${cls}">${arr} ${Math.abs(pct).toFixed(1)}%</span>` : '<span class="nu">—</span>'}
+          ${pct != null ? `<span class="ht-pct">${arr} ${Math.abs(pct).toFixed(1)}%</span>` : '<span class="nu">—</span>'}
         </td>
         <td class="r"><span class="ht-qty">${i.totalQty > 0 ? i.totalQty + ' szt.' : '<span class="nu">—</span>'}</span></td>
         <td class="r"><span class="ht-cost">${i.totalSpent ? fmt(i.totalSpent) : '<span class="nu">—</span>'}</span></td>
@@ -799,7 +799,7 @@ function renderSidebar() {
         </div>
         <div class="wc-price-row">
           <span class="wc-price">${item.currentPrice ? fmt(item.currentPrice) : '<span style="color:var(--dim);font-size:10px">brak ceny</span>'}</span>
-          ${pct != null ? `<span class="wc-pct ${cls}">${arr}${Math.abs(pct).toFixed(1)}%</span>` : ''}
+          ${pct != null ? `<span class="wc-pct">${arr}${Math.abs(pct).toFixed(1)}%</span>` : ''}
         </div>
         <button class="wc-del" onclick="deleteItem(event,${item.id})" title="Usuń">×</button>
       </div>`;
@@ -848,7 +848,7 @@ function renderMain(item) {
     <div class="stats-row">
       <div class="stat-card">
         <div class="stat-label">Cena minimalna</div>
-        <div class="stat-value gold">${fmt(item.currentPrice)}</div>
+        <div class="stat-value">${fmt(item.currentPrice)}</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">Mediana 24h</div>
@@ -869,10 +869,10 @@ function renderMain(item) {
     <div class="card" style="padding:18px 0">
       <div class="card-title" style="padding:0 24px">Podsumowanie pozycji</div>
       <div class="pf-grid">
-        <div class="pf-cell"><div class="pf-label">Ilość</div><div class="pf-value accent">${item.totalQty} szt.</div></div>
-        <div class="pf-cell"><div class="pf-label">Śr. cena zakupu</div><div class="pf-value gold">${fmt(item.avgBuyPrice)}</div></div>
+        <div class="pf-cell"><div class="pf-label">Ilość</div><div class="pf-value">${item.totalQty} szt.</div></div>
+        <div class="pf-cell"><div class="pf-label">Śr. cena zakupu</div><div class="pf-value">${fmt(item.avgBuyPrice)}</div></div>
         <div class="pf-cell"><div class="pf-label">Łączny koszt</div><div class="pf-value">${fmt(item.totalSpent)}</div></div>
-        <div class="pf-cell"><div class="pf-label">Wartość teraz</div><div class="pf-value gold">${fmt(item.totalValue)}</div></div>
+        <div class="pf-cell"><div class="pf-label">Wartość teraz</div><div class="pf-value">${fmt(item.totalValue)}</div></div>
         <div class="pf-cell">
           <div class="pf-label">P&L łącznie</div>
           <div class="pf-value ${cls}">
