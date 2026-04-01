@@ -145,12 +145,13 @@ app.get('/api/search', async (req, res) => {
       timeout: 12000
     });
 
-    if (typeof response.data !== 'object') {
+    // Steam czasem zwraca HTML — fallback
+    if (typeof response.data !== 'object' || !response.data.results) {
       console.error("Steam returned HTML instead of JSON");
       return res.json([]);
     }
 
-    const items = (response.data?.results || []).map(i => ({
+    const items = response.data.results.map(i => ({
       name: i.name,
       marketHashName: i.hash_name,
       price: i.sell_price_text,
@@ -158,6 +159,14 @@ app.get('/api/search', async (req, res) => {
         ? `https://community.cloudflare.steamstatic.com/economy/image/${i.asset_description.icon_url}/96fx96f`
         : null
     }));
+
+    res.json(items);
+
+  } catch (e) {
+    console.error("Steam search error:", e.message);
+    res.status(502).json({ error: 'Steam search failed' });
+  }
+});
 
     res.json(items);
 
