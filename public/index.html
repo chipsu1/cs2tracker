@@ -932,14 +932,17 @@
   <script>
     // API base — relative paths work both locally and on Railway
     const API = '/api';
-    function authHeaders(extra = {}) {
+
+
+
+    
+   function authHeaders(includeJson = false) {
   const token = localStorage.getItem('token');
   return {
-    ...extra,
+    ...(includeJson ? { 'Content-Type': 'application/json' } : {}),
     ...(token ? { Authorization: 'Bearer ' + token } : {})
   };
 }
-
     let items = [];
     let activeId = null;
     let chart = null;
