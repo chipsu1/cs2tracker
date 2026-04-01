@@ -1596,9 +1596,9 @@
       btn.disabled = true;
       btn.textContent = 'Dodawanie...';
       try {
-        const r = await fetch(`${API}/watchlist`, {
+      const r = await fetch(`${API}/watchlist`, {
   method: 'POST',
-  headers: authHeaders(true),
+  headers: { 'Content-Type': 'application/json', ...authHeaders() },  // ← fix #1
   body: JSON.stringify({
     name: mSelected.name,
     marketHashName: mSelected.marketHashName,
@@ -1606,7 +1606,6 @@
     imageUrl: mSelected.imageUrl
   })
 });
-
         if (r.status === 409) {
           toast('Ten przedmiot już jest na liście', 'err');
           return;
