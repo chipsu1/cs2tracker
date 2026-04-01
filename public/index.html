@@ -932,6 +932,13 @@
   <script>
     // API base — relative paths work both locally and on Railway
     const API = '/api';
+    function authHeaders(extra = {}) {
+  const token = localStorage.getItem('token');
+  return {
+    ...extra,
+    ...(token ? { Authorization: 'Bearer ' + token } : {})
+  };
+}
 
     let items = [];
     let activeId = null;
@@ -998,7 +1005,9 @@
 
     async function loadWatchlist() {
       try {
-        const r = await fetch(API + '/watchlist');
+        const r = await fetch(API + '/watchlist', {
+  headers: authHeaders()
+});
         items = await r.json();
         $('cnt').textContent = items.length;
         renderSidebar();
@@ -1076,7 +1085,9 @@
       if (!item) return;
       chartRange = '7d';
       renderMain(item);
-      const r = await fetch(`${API}/history/${id}`);
+      const r = await fetch(`${API}/history/${id}`, {
+  headers: authHeaders()
+});
       fullHistory = await r.json();
       renderChart();
       updateDayChange();
@@ -1380,14 +1391,19 @@
       btn.disabled = true;
       btn.textContent = '⟳ Pobieranie...';
       try {
-        const r = await fetch(`${API}/refresh/${id}`, { method: 'POST' });
+        const r = await fetch(`${API}/refresh/${id}`, {
+  method: 'POST',
+  headers: authHeaders()
+});
         if (!r.ok) throw new Error();
         toast('Cena zaktualizowana ✓', 'ok');
         await loadWatchlist();
         const item = items.find(w => w.id === id);
         if (item && activeId === id) {
           renderMain(item);
-          const hr = await fetch(`${API}/history/${id}`);
+          const hr = await fetch(`${API}/history/${id}`, {
+  headers: authHeaders()
+});
           fullHistory = await hr.json();
           renderChart();
           updateDayChange();
@@ -1405,7 +1421,10 @@
       btn.textContent = '⟳ Odświeżam...';
       $('rafNote').textContent = 'Trwa odświeżanie (~3s/szt.)...';
       try {
-        await fetch(`${API}/refresh-all`, { method: 'POST' });
+        await fetch(`${API}/refresh-all`, {
+  method: 'POST',
+  headers: authHeaders()
+});
         toast('Odświeżanie uruchomione w tle', 'ok');
         const wait = items.length * 4000 + 3000;
         setTimeout(async () => {
@@ -1414,7 +1433,10 @@
             const item = items.find(w => w.id === activeId);
             if (item) {
               renderMain(item);
-              const hr = await fetch(`${API}/history/${activeId}`);
+             const hr = await fetch(`${API}/history/${activeId}`, {
+  headers: authHeaders()
+});
+
               fullHistory = await hr.json();
               renderChart();
               updateDayChange();
@@ -1436,10 +1458,11 @@
       const val = parseFloat($('buyInp').value) || null;
       try {
         const r = await fetch(`${API}/watchlist/${id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ buyPrice: val })
-        });
+  method: 'PATCH',
+  headers: authHeaders(true),
+  body: JSON.stringify({ buyPrice: val })
+});
+
         const updated = await r.json();
         const idx = items.findIndex(w => w.id === id);
         if (idx !== -1) items[idx] = updated;
@@ -1455,7 +1478,11 @@
       e.stopPropagation();
       if (!confirm('Usunąć ten przedmiot z obserwowanych?')) return;
       try {
-        await fetch(`${API}/watchlist/${id}`, { method: 'DELETE' });
+        await fetch(`${API}/watchlist/${id}`, {
+  method: 'DELETE',
+  headers: authHeaders()
+});
+
         if (activeId === id) {
           activeId = null;
           $('main').innerHTML = `
@@ -1514,7 +1541,10 @@
         '<span class="spin"></span> Szukam na Steam...' +
         '</div>';
       try {
-        const r = await fetch(`${API}/search?q=${encodeURIComponent(q)}`);
+        const r = await fetch(`${API}/search?q=${encodeURIComponent(q)}`, {
+  headers: authHeaders()
+});
+
         const results = await r.json();
         if (!results.length) {
           el.innerHTML =
@@ -1564,15 +1594,16 @@
       btn.textContent = 'Dodawanie...';
       try {
         const r = await fetch(`${API}/watchlist`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: mSelected.name,
-            marketHashName: mSelected.marketHashName,
-            buyPrice,
-            imageUrl: mSelected.imageUrl
-          })
-        });
+  method: 'POST',
+  headers: authHeaders(true),
+  body: JSON.stringify({
+    name: mSelected.name,
+    marketHashName: mSelected.marketHashName,
+    buyPrice,
+    imageUrl: mSelected.imageUrl
+  })
+});
+
         if (r.status === 409) {
           toast('Ten przedmiot już jest na liście', 'err');
           return;
@@ -1603,7 +1634,10 @@
         dd.innerHTML =
           '<div class="search-hint"><span class="spin"></span> Szukam...</div>';
         try {
-          const r = await fetch(`${API}/search?q=${encodeURIComponent(q)}`);
+          const r = await fetch(`${API}/search?q=${encodeURIComponent(q)}`, {
+  headers: authHeaders()
+});
+
           const res = await r.json();
           if (!res.length) {
             dd.innerHTML =
@@ -1678,11 +1712,12 @@
       }
 
       try {
-        const res = await fetch(`${API}/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password })
-        });
+       const res = await fetch(`${API}/login`, {
+  method: 'POST',
+  headers: authHeaders(true),
+  body: JSON.stringify({ email, password })
+});
+
 
         if (!res.ok) {
           toast('Błędne dane logowania', 'err');
@@ -1732,11 +1767,12 @@ async function registerUser() {
   }
 
   try {
-    const res = await fetch('/api/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password: pass1 })
-    });
+const res = await fetch('/api/register', {
+  method: 'POST',
+  headers: authHeaders(true),
+  body: JSON.stringify({ email, password: pass1 })
+});
+
 
     if (!res.ok) {
       toast('Nie udało się utworzyć konta', 'err');
