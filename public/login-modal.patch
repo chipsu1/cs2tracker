@@ -1,0 +1,88 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Tomasz <tomasz@example.com>
+Date: Wed, 1 Apr 2026 12:00:00 +0200
+Subject: [PATCH] Add manual Login button + working login modal
+
+---
+ public/index.html | 85 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 85 insertions(+)
+
+diff --git a/public/index.html b/public/index.html
+index 3f2c1ab..abcd123 100644
+--- a/public/index.html
++++ b/public/index.html
+@@ -120,6 +120,12 @@
+       <div class="topbar-right">
++        <!-- NEW: Manual login button -->
++        <button class="btn ghost" onclick="openAuthModal()">
++          Zaloguj
++        </button>
++
+         <div class="dot" id="sDot"></div>
+         <div class="status-txt" id="sTxt">Łączenie...</div>
+       </div>
+@@ -580,6 +586,85 @@
+   </script>
+
++  <!-- NEW LOGIN MODAL -->
++  <div id="auth-modal" class="modal-overlay">
++    <div class="modal">
++      <div class="modal-title">Logowanie</div>
++
++      <div class="mrow">
++        <div class="mlbl">Email</div>
++        <input id="auth-email" class="minp" type="email" placeholder="email@example.com">
++      </div>
++
++      <div class="mrow">
++        <div class="mlbl">Hasło</div>
++        <input id="auth-password" class="minp" type="password" placeholder="••••••••">
++      </div>
++
++      <div class="mbtns">
++        <button class="btn ghost" onclick="closeAuthModal()">Anuluj</button>
++        <button class="btn" onclick="login()">Zaloguj</button>
++      </div>
++    </div>
++  </div>
++
++  <script>
++    function openAuthModal() {
++      document.getElementById("auth-modal").classList.add("show");
++    }
++
++    function closeAuthModal() {
++      document.getElementById("auth-modal").classList.remove("show");
++    }
++
++    async function login() {
++      const email = document.getElementById("auth-email").value;
++      const password = document.getElementById("auth-password").value;
++
++      try {
++        const res = await fetch("/api/login", {
++          method: "POST",
++          headers: { "Content-Type": "application/json" },
++          body: JSON.stringify({ email, password })
++        });
++
++        if (!res.ok) {
++          toast("Błędne dane logowania", "err");
++          return;
++        }
++
++        const data = await res.json();
++        localStorage.setItem("token", data.token);
++
++        toast("Zalogowano ✓", "ok");
++        closeAuthModal();
++      } catch {
++        toast("Błąd połączenia", "err");
++      }
++    }
++  </script>
++
+ </body>
+ </html>
+--
+2.34.1
