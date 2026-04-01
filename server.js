@@ -415,10 +415,18 @@ app.get('/api/search', async (req, res) => {
 
     if (!response.data?.results) return res.json([]);
 
-    const items = response.data.results.map(i => ({
+    const raw = response.data.results.slice(0, 10);
+
+    // Pobierz ceny PLN z priceoverview dla pierwszych 6 wyników równolegle
+    const pricePromises = raw.slice(0, 6).map(i =>
+      fetchSteamPrice(i.hash_name).catch(() => null)
+    );
+    const prices = await Promise.all(pricePromises);
+
+    const items = raw.map((i, idx) => ({
       name: i.name,
       marketHashName: i.hash_name,
-      price: normalizeSteamPrice(i.sell_price_text || null),  // sell_price_text jest w PLN (currency=6)
+      price: prices[idx]?.lowest_price ?? null,  // PLN z priceoverview
       imageUrl: i.asset_description?.icon_url
         ? `https://community.cloudflare.steamstatic.com/economy/image/${i.asset_description.icon_url}/96fx96f`
         : null
