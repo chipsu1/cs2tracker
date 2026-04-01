@@ -5,215 +5,362 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CS2 Price Tracker</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #080c14; --surface: #0f1623; --panel: #161e2e; --panel2: #1c2640;
-      --border: rgba(82,165,240,0.12); --border2: rgba(82,165,240,0.22);
-      --accent: #52a5f0; --gold: #f0c040; --green: #3dd68c; --red: #f06060;
-      --text: #d8e4f4; --muted: #5a7090; --muted2: #8099b8;
-      --mono: 'Share Tech Mono', monospace; --sans: 'Barlow', sans-serif; --cond: 'Barlow Condensed', sans-serif;
+      --bg:      #07090f;
+      --s1:      #0d1119;
+      --s2:      #111827;
+      --s3:      #1a2235;
+      --border:  rgba(255,255,255,0.06);
+      --border2: rgba(255,255,255,0.11);
+      --accent:  #4f9cf9;
+      --gold:    #f5c842;
+      --green:   #22d87a;
+      --red:     #f05252;
+      --text:    #e8f0fe;
+      --sub:     #8899bb;
+      --dim:     #4a5870;
+      --mono: 'JetBrains Mono', monospace;
+      --head: 'Syne', sans-serif;
+      --body: 'Inter', sans-serif;
     }
     html, body { height: 100%; overflow: hidden; }
-    body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; }
-    .layout { display: grid; grid-template-rows: 52px 1fr; height: 100vh; }
-    .body { display: grid; grid-template-columns: 285px 1fr; height: 100%; overflow: hidden; }
+    body { background: var(--bg); color: var(--text); font-family: var(--body); font-size: 13px; line-height: 1.5; }
 
-    /* TOPBAR */
-    .topbar { background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 14px; padding: 0 18px; z-index: 10; }
-    .logo { display: flex; align-items: center; gap: 8px; font-family: var(--cond); font-size: 20px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); white-space: nowrap; }
-    .logo-sq { width: 30px; height: 30px; background: var(--accent); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 13px; color: #fff; }
-    .search-wrap { flex: 1; max-width: 480px; position: relative; }
-    .search-wrap input { width: 100%; background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 7px 14px; color: var(--text); font-family: var(--sans); font-size: 13px; outline: none; transition: border-color .2s; }
-    .search-wrap input:focus { border-color: var(--accent); }
-    .search-wrap input::placeholder { color: var(--muted); }
-    .search-dropdown { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--panel2); border: 1px solid var(--border2); border-radius: 8px; z-index: 100; display: none; max-height: 320px; overflow-y: auto; }
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--s3); border-radius: 4px; }
+
+    /* ── LAYOUT ── */
+    .layout { display: grid; grid-template-rows: 56px 1fr; height: 100vh; }
+    .body   { display: grid; grid-template-columns: 300px 1fr; height: 100%; overflow: hidden; }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      background: var(--s1);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 16px; padding: 0 20px;
+      z-index: 20;
+    }
+    .logo {
+      display: flex; align-items: center; gap: 10px;
+      font-family: var(--head); font-size: 17px; font-weight: 800;
+      letter-spacing: 0.04em; color: var(--text); white-space: nowrap;
+    }
+    .logo-sq {
+      width: 32px; height: 32px; background: var(--accent); border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono); font-size: 12px; font-weight: 600; color: #fff;
+      flex-shrink: 0;
+    }
+    .search-wrap { flex: 1; max-width: 440px; position: relative; }
+    .search-inp {
+      width: 100%; background: var(--s2); border: 1px solid var(--border2);
+      border-radius: 8px; padding: 8px 16px; color: var(--text);
+      font-family: var(--body); font-size: 13px; outline: none; transition: border-color .15s;
+    }
+    .search-inp:focus { border-color: var(--accent); }
+    .search-inp::placeholder { color: var(--dim); }
+    .search-dropdown {
+      position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+      background: var(--s2); border: 1px solid var(--border2); border-radius: 10px;
+      z-index: 100; display: none; overflow: hidden; max-height: 340px; overflow-y: auto;
+      box-shadow: 0 16px 40px rgba(0,0,0,.5);
+    }
     .search-dropdown.show { display: block; }
-    .sdrop-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; cursor: pointer; transition: background .15s; border-bottom: 1px solid var(--border); }
+    .sdrop-item {
+      display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+      cursor: pointer; transition: background .12s; border-bottom: 1px solid var(--border);
+    }
     .sdrop-item:last-child { border-bottom: none; }
-    .sdrop-item:hover { background: rgba(82,165,240,0.08); }
-    .sdrop-item img { width: 44px; height: 32px; object-fit: contain; }
+    .sdrop-item:hover { background: var(--s3); }
+    .sdrop-item img { width: 46px; height: 34px; object-fit: contain; border-radius: 4px; }
     .sdrop-name { font-size: 12px; font-weight: 500; color: var(--text); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .sdrop-price { font-size: 12px; color: var(--gold); font-family: var(--mono); }
-    .sdrop-add { font-size: 11px; color: var(--accent); white-space: nowrap; }
-    .search-hint { padding: 11px 12px; font-size: 12px; color: var(--muted); text-align: center; }
-    .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+    .sdrop-price { font-size: 12px; color: var(--gold); font-family: var(--mono); font-weight: 500; white-space: nowrap; }
+    .sdrop-add { font-size: 11px; color: var(--accent); white-space: nowrap; padding: 2px 8px; border: 1px solid rgba(79,156,249,.3); border-radius: 4px; }
+    .search-hint { padding: 14px; font-size: 12px; color: var(--sub); text-align: center; }
+    .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+    .status-pill {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--s2); border: 1px solid var(--border); border-radius: 20px;
+      padding: 5px 12px;
+    }
     .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
     .dot.off { background: var(--red); }
-    .status-txt { font-size: 11px; color: var(--muted2); }
+    .status-txt { font-size: 11px; color: var(--sub); font-family: var(--mono); }
 
-    /* USER BADGE */
-    .user-badge { display: flex; align-items: center; gap: 7px; background: var(--panel); border: 1px solid var(--border2); border-radius: 20px; padding: 4px 12px 4px 6px; cursor: pointer; transition: border-color .2s, background .2s; position: relative; }
-    .user-badge:hover { border-color: var(--border2); background: var(--panel); }
-    .user-badge.open { border-color: var(--accent); background: var(--panel2); }
-    .user-avatar { width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), #2060b0); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; font-family: var(--mono); flex-shrink: 0; }
-    .user-email { font-size: 12px; color: var(--muted2); max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .user-dropdown { position: absolute; top: calc(100% + 4px); right: 0; background: var(--panel2); border: 1px solid var(--border2); border-radius: 8px; min-width: 160px; display: none; z-index: 200; overflow: hidden; }
+    /* ── USER BADGE ── */
+    .user-badge {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--s2); border: 1px solid var(--border2);
+      border-radius: 20px; padding: 4px 14px 4px 6px;
+      cursor: pointer; transition: all .15s; position: relative;
+    }
+    .user-badge.open, .user-badge:hover { border-color: var(--accent); background: var(--s3); }
+    .user-avatar {
+      width: 26px; height: 26px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent) 0%, #1e5fc8 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: #fff; font-family: var(--mono); flex-shrink: 0;
+    }
+    .user-email { font-size: 12px; color: var(--sub); max-width: 130px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: var(--mono); }
+    .user-dropdown {
+      position: absolute; top: calc(100% + 4px); right: 0;
+      background: var(--s2); border: 1px solid var(--border2);
+      border-radius: 10px; min-width: 170px; display: none; z-index: 200; overflow: hidden;
+      box-shadow: 0 12px 32px rgba(0,0,0,.4);
+    }
     .user-badge.open .user-dropdown { display: block; }
     .user-badge.open::after { content: ''; position: absolute; top: 100%; left: 0; right: 0; height: 8px; }
-    .user-dropdown-item { padding: 9px 14px; font-size: 12px; color: var(--muted2); cursor: pointer; transition: background .15s, color .15s; border-bottom: 1px solid var(--border); }
-    .user-dropdown-item:last-child { border-bottom: none; }
-    .user-dropdown-item:hover { background: rgba(82,165,240,.08); color: var(--text); }
-    .user-dropdown-item.danger:hover { background: rgba(240,96,96,.08); color: var(--red); }
+    .udrop-item {
+      padding: 10px 16px; font-size: 12px; color: var(--sub);
+      cursor: pointer; transition: background .12s, color .12s;
+      border-bottom: 1px solid var(--border);
+    }
+    .udrop-item:last-child { border-bottom: none; }
+    .udrop-item:hover { background: var(--s3); color: var(--text); }
+    .udrop-item.danger:hover { background: rgba(240,82,82,.1); color: var(--red); }
+    .udrop-email { padding: 10px 16px; font-size: 11px; color: var(--dim); font-family: var(--mono); cursor: default; border-bottom: 1px solid var(--border); }
 
-    /* BUTTONS */
-    .btn { background: var(--accent); border: none; border-radius: 6px; padding: 7px 16px; color: #fff; font-family: var(--sans); font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: opacity .2s, transform .1s; }
-    .btn:hover { opacity: .85; }
-    .btn:active { transform: scale(.97); }
-    .btn:disabled { opacity: .35; cursor: not-allowed; }
-    .btn.ghost { background: transparent; border: 1px solid var(--border2); color: var(--muted2); }
-    .btn.ghost:hover { border-color: var(--accent); color: var(--accent); background: rgba(82,165,240,.06); }
-    .btn.sm { padding: 4px 10px; font-size: 11px; }
-    .btn.xs { padding: 2px 7px; font-size: 10px; }
-    .btn.gold { background: var(--gold); color: #1a1200; }
-    .btn.red { background: rgba(240,96,96,.15); border: 1px solid rgba(240,96,96,.3); color: var(--red); }
-    .btn.red:hover { background: rgba(240,96,96,.25); }
+    /* ── BUTTONS ── */
+    .btn {
+      background: var(--accent); border: none; border-radius: 8px;
+      padding: 8px 18px; color: #fff; font-family: var(--body);
+      font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;
+      transition: opacity .15s, transform .1s; letter-spacing: 0.01em;
+    }
+    .btn:hover { opacity: .85; } .btn:active { transform: scale(.97); }
+    .btn:disabled { opacity: .3; cursor: not-allowed; }
+    .btn.ghost { background: transparent; border: 1px solid var(--border2); color: var(--sub); }
+    .btn.ghost:hover { border-color: var(--accent); color: var(--accent); background: rgba(79,156,249,.06); }
+    .btn.gold { background: var(--gold); color: #12100a; }
+    .btn.gold:hover { opacity: .88; }
+    .btn.sm { padding: 5px 12px; font-size: 12px; border-radius: 6px; }
+    .btn.xs { padding: 3px 8px; font-size: 11px; border-radius: 5px; }
+    .btn.danger { background: rgba(240,82,82,.15); border: 1px solid rgba(240,82,82,.3); color: var(--red); }
+    .btn.danger:hover { background: rgba(240,82,82,.25); }
 
-    /* SIDEBAR */
-    .sidebar { background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
-    .sidebar-top { padding: 10px 12px 0; }
-    .s-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); padding: 10px 14px 4px; }
+    /* ── SIDEBAR ── */
+    .sidebar {
+      background: var(--s1); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .sidebar-top { padding: 14px 14px 0; }
+    .s-section {
+      font-family: var(--mono); font-size: 10px; font-weight: 500;
+      letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim);
+      padding: 12px 16px 6px;
+    }
     .watchlist { flex: 1; overflow-y: auto; }
-    .watchlist::-webkit-scrollbar { width: 3px; }
-    .watchlist::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
-    .wcard { padding: 11px 14px; border-bottom: 1px solid rgba(82,165,240,.05); cursor: pointer; position: relative; transition: background .15s; border-left: 2px solid transparent; }
-    .wcard:hover { background: var(--panel); }
-    .wcard.active { background: var(--panel); border-left-color: var(--accent); }
-    .wc-name { font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.3; padding-right: 26px; }
-    .wc-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
-    .wc-price { font-family: var(--mono); font-size: 13px; color: var(--gold); }
-    .wc-chg { font-family: var(--mono); font-size: 11px; }
-    .wc-meta { font-size: 10px; color: var(--muted2); margin-top: 2px; font-family: var(--mono); }
-    .wc-time { font-size: 10px; color: var(--muted); margin-top: 2px; }
-    .wc-del { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--muted); cursor: pointer; font-size: 13px; padding: 4px; border-radius: 3px; line-height: 1; transition: color .15s, background .15s; }
-    .wc-del:hover { color: var(--red); background: rgba(240,96,96,.1); }
-    .sidebar-footer { padding: 10px 12px; border-top: 1px solid var(--border); }
-    .refresh-note { font-size: 10px; color: var(--muted); text-align: center; margin-top: 6px; }
-    .login-banner { background: rgba(82,165,240,.07); border: 1px solid rgba(82,165,240,.2); border-radius: 8px; padding: 12px 16px; font-size: 12px; color: var(--muted2); text-align: center; margin: 8px 12px; }
+
+    /* ── WCARD ── */
+    .wcard {
+      padding: 13px 16px; border-bottom: 1px solid var(--border);
+      cursor: pointer; position: relative; transition: background .12s;
+      border-left: 3px solid transparent;
+    }
+    .wcard:hover { background: var(--s2); }
+    .wcard.active { background: var(--s2); border-left-color: var(--accent); }
+    .wc-name {
+      font-family: var(--body); font-size: 13px; font-weight: 500;
+      color: var(--text); line-height: 1.3; padding-right: 28px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .wc-price-row { display: flex; align-items: baseline; gap: 8px; margin-top: 5px; }
+    .wc-price { font-family: var(--mono); font-size: 16px; font-weight: 600; color: var(--gold); }
+    .wc-pct { font-family: var(--mono); font-size: 11px; font-weight: 500; }
+    .wc-stats { display: flex; gap: 10px; margin-top: 4px; }
+    .wc-stat { font-family: var(--mono); font-size: 10px; color: var(--sub); }
+    .wc-stat span { color: var(--text); }
+    .wc-time { font-size: 10px; color: var(--dim); margin-top: 3px; font-family: var(--mono); }
+    .wc-del {
+      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; color: var(--dim); cursor: pointer;
+      font-size: 14px; padding: 4px 6px; border-radius: 4px; line-height: 1; transition: all .12s;
+    }
+    .wc-del:hover { color: var(--red); background: rgba(240,82,82,.1); }
+    .sidebar-footer { padding: 12px 14px; border-top: 1px solid var(--border); }
+    .refresh-note { font-family: var(--mono); font-size: 10px; color: var(--dim); text-align: center; margin-top: 6px; }
+    .login-banner { margin: 10px 14px; background: rgba(79,156,249,.07); border: 1px solid rgba(79,156,249,.2); border-radius: 8px; padding: 12px 14px; font-size: 12px; color: var(--sub); text-align: center; }
     .login-banner a { color: var(--accent); cursor: pointer; text-decoration: underline; }
 
-    /* MAIN */
-    .main { overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
-    .main::-webkit-scrollbar { width: 4px; }
-    .main::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
-    .empty-state { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: var(--muted); }
-    .empty-icon { font-size: 52px; opacity: .2; }
-    .empty-title { font-size: 15px; font-weight: 500; color: var(--muted2); }
+    /* ── MAIN ── */
+    .main { overflow-y: auto; padding: 24px 28px; display: flex; flex-direction: column; gap: 20px; }
 
-    /* ITEM HEADER */
-    .item-header { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; display: flex; align-items: center; gap: 16px; }
-    .item-img { width: 80px; height: 56px; background: var(--panel); border: 1px solid var(--border); border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
-    .item-img img { width: 100%; height: 100%; object-fit: contain; }
+    /* ── EMPTY STATE ── */
+    .empty-state { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
+    .empty-icon { font-size: 56px; opacity: .15; }
+    .empty-title { font-family: var(--head); font-size: 22px; font-weight: 700; color: var(--sub); }
+    .empty-sub { font-size: 14px; color: var(--dim); }
+
+    /* ── CARD BASE ── */
+    .card {
+      background: var(--s1); border: 1px solid var(--border);
+      border-radius: 14px; padding: 22px 24px;
+    }
+    .card-title {
+      font-family: var(--mono); font-size: 10px; font-weight: 500;
+      letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim);
+      margin-bottom: 18px;
+    }
+
+    /* ── ITEM HEADER ── */
+    .item-header { display: flex; align-items: center; gap: 20px; }
+    .item-img-wrap {
+      width: 90px; height: 65px; background: var(--s2); border: 1px solid var(--border2);
+      border-radius: 10px; display: flex; align-items: center; justify-content: center;
+      overflow: hidden; flex-shrink: 0;
+    }
+    .item-img-wrap img { width: 100%; height: 100%; object-fit: contain; }
     .item-info { flex: 1; min-width: 0; }
-    .item-name { font-family: var(--cond); font-size: 18px; font-weight: 700; color: var(--text); }
-    .item-meta { font-size: 11px; color: var(--muted2); margin-top: 3px; }
+    .item-name { font-family: var(--head); font-size: 22px; font-weight: 700; color: var(--text); line-height: 1.2; }
+    .item-sub { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+    .wear-badge {
+      font-family: var(--mono); font-size: 10px; font-weight: 600;
+      padding: 2px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .wear-fn { background: rgba(245,200,66,.12); color: var(--gold); }
+    .wear-mw { background: rgba(79,156,249,.12); color: #7abcfa; }
+    .wear-ft { background: rgba(34,216,122,.12); color: var(--green); }
+    .wear-ww { background: rgba(160,174,192,.12); color: #a0aec0; }
+    .wear-bs { background: rgba(240,82,82,.12); color: var(--red); }
+    .item-platform { font-size: 12px; color: var(--dim); font-family: var(--mono); }
     .price-block { text-align: right; flex-shrink: 0; }
-    .price-main { font-family: var(--mono); font-size: 30px; color: var(--gold); line-height: 1; }
-    .price-chg { font-family: var(--mono); font-size: 12px; margin-top: 4px; }
+    .price-big { font-family: var(--mono); font-size: 38px; font-weight: 600; color: var(--gold); line-height: 1; letter-spacing: -0.01em; }
+    .price-change { font-family: var(--mono); font-size: 13px; margin-top: 6px; }
 
-    /* STATS */
-    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-    .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
-    .stat-lbl { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
-    .stat-val { font-family: var(--mono); font-size: 17px; }
+    /* ── STATS ROW ── */
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+    .stat-card { background: var(--s2); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
+    .stat-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); margin-bottom: 10px; }
+    .stat-value { font-family: var(--mono); font-size: 20px; font-weight: 600; color: var(--text); }
+    .stat-value.gold { color: var(--gold); }
 
-    /* PORTFOLIO SUMMARY */
-    .portfolio-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; }
-    .portfolio-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
-    .pf-item { display: flex; flex-direction: column; gap: 4px; }
-    .pf-lbl { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
-    .pf-val { font-family: var(--mono); font-size: 15px; }
+    /* ── PORTFOLIO BOX ── */
+    .pf-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; }
+    .pf-cell {
+      padding: 14px 16px; border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .pf-cell:last-child { border-right: none; }
+    .pf-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); }
+    .pf-value { font-family: var(--mono); font-size: 18px; font-weight: 600; }
+    .pf-value.accent { color: var(--accent); }
+    .pf-value.gold { color: var(--gold); }
 
-    /* PURCHASES PANEL */
-    .purch-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; }
-    .purch-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-    .purch-title { font-family: var(--cond); font-size: 13px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--muted2); }
-    .purch-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    .purch-table th { text-align: left; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); padding: 0 8px 8px; font-weight: 500; border-bottom: 1px solid var(--border); }
-    .purch-table th:last-child { text-align: right; }
-    .purch-table td { padding: 9px 8px; border-bottom: 1px solid rgba(82,165,240,.04); vertical-align: middle; }
-    .purch-table tr:last-child td { border-bottom: none; }
-    .purch-table tr:hover td { background: rgba(82,165,240,.03); }
-    .purch-table td:last-child { text-align: right; }
-    .purch-qty { font-family: var(--mono); color: var(--accent); font-weight: 600; }
-    .purch-price { font-family: var(--mono); color: var(--gold); }
-    .purch-total { font-family: var(--mono); color: var(--muted2); }
-    .purch-pnl { font-family: var(--mono); font-size: 11px; }
-    .purch-note { font-size: 11px; color: var(--muted); font-style: italic; }
-    .purch-date { font-size: 10px; color: var(--muted); }
-    .purch-empty { padding: 20px; text-align: center; color: var(--muted); font-size: 12px; }
+    /* ── PURCHASES ── */
+    .purch-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .purch-table-wrap { overflow-x: auto; }
+    table.pt {
+      width: 100%; border-collapse: collapse; font-size: 13px;
+    }
+    table.pt thead th {
+      font-family: var(--mono); font-size: 10px; font-weight: 500;
+      letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim);
+      padding: 0 14px 12px; text-align: left; border-bottom: 1px solid var(--border);
+    }
+    table.pt thead th.r { text-align: right; }
+    table.pt tbody tr { transition: background .1s; }
+    table.pt tbody tr:hover td { background: rgba(255,255,255,.025); }
+    table.pt tbody td {
+      padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,.04);
+      vertical-align: middle;
+    }
+    table.pt tbody tr:last-child td { border-bottom: none; }
+    table.pt td.r { text-align: right; }
+    .pt-qty { font-family: var(--mono); font-size: 15px; font-weight: 600; color: var(--accent); }
+    .pt-price { font-family: var(--mono); font-size: 14px; font-weight: 500; color: var(--gold); }
+    .pt-cost { font-family: var(--mono); font-size: 13px; color: var(--sub); }
+    .pt-value { font-family: var(--mono); font-size: 13px; color: var(--text); }
+    .pt-pnl { font-family: var(--mono); font-size: 13px; font-weight: 600; }
+    .pt-pnl-pct { font-size: 10px; font-weight: 400; opacity: .7; }
+    .pt-note { font-size: 11px; color: var(--dim); font-style: italic; margin-top: 2px; }
+    .pt-date { font-family: var(--mono); font-size: 11px; color: var(--dim); }
+    .purch-empty { padding: 28px 0; text-align: center; color: var(--dim); font-size: 13px; }
 
-    /* ADD PURCHASE FORM */
-    .add-purch-form { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
-    .apf-group { display: flex; flex-direction: column; gap: 5px; }
-    .apf-lbl { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
-    .apf-inp { background: var(--panel2); border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px; color: var(--text); font-family: var(--mono); font-size: 13px; outline: none; transition: border-color .2s; }
-    .apf-inp:focus { border-color: var(--accent); }
-    .apf-inp.w-sm { width: 80px; }
-    .apf-inp.w-md { width: 110px; }
-    .apf-inp.w-lg { width: 160px; }
+    /* ── ADD FORM ── */
+    .add-form {
+      margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border);
+      display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;
+    }
+    .af-group { display: flex; flex-direction: column; gap: 6px; }
+    .af-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); }
+    .af-inp {
+      background: var(--s2); border: 1px solid var(--border2); border-radius: 8px;
+      padding: 9px 13px; color: var(--text); font-family: var(--mono);
+      font-size: 14px; outline: none; transition: border-color .15s;
+    }
+    .af-inp:focus { border-color: var(--accent); }
+    .af-inp.w60 { width: 80px; }
+    .af-inp.w120 { width: 128px; }
+    .af-inp.w180 { width: 180px; }
 
-    /* CHART */
-    .chart-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
-    .chart-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-    .chart-title { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+    /* ── CHART ── */
+    .chart-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
     .chart-tabs { display: flex; gap: 4px; }
-    .ctab { background: var(--panel); border: 1px solid var(--border); border-radius: 4px; padding: 3px 10px; font-size: 11px; cursor: pointer; color: var(--muted2); transition: all .15s; }
-    .ctab.active, .ctab:hover { border-color: var(--accent); color: var(--accent); background: rgba(82,165,240,.08); }
-    .chart-area { position: relative; width: 100%; height: 180px; }
+    .ctab {
+      font-family: var(--mono); font-size: 11px; background: var(--s2);
+      border: 1px solid var(--border); border-radius: 6px;
+      padding: 4px 12px; cursor: pointer; color: var(--sub); transition: all .12s;
+    }
+    .ctab.active, .ctab:hover { border-color: var(--accent); color: var(--accent); background: rgba(79,156,249,.08); }
+    .chart-area { position: relative; width: 100%; height: 220px; }
+    .chart-empty { height: 220px; display: flex; align-items: center; justify-content: center; color: var(--dim); font-size: 13px; font-family: var(--mono); }
 
-    /* TAGS */
-    .tag { display: inline-block; padding: 2px 7px; border-radius: 3px; font-size: 10px; font-weight: 600; letter-spacing: .5px; text-transform: uppercase; }
-    .tag.fn { background: rgba(240,192,64,.12); color: var(--gold); }
-    .tag.mw { background: rgba(82,165,240,.12); color: #82c5f0; }
-    .tag.ft { background: rgba(61,214,140,.12); color: var(--green); }
-    .tag.ww { background: rgba(160,174,192,.12); color: #a0aec0; }
-    .tag.bs { background: rgba(240,96,96,.12); color: var(--red); }
-    .up { color: var(--green); } .dn { color: var(--red); } .nu { color: var(--muted2); }
-
-    /* MODALS */
-    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.65); z-index: 200; align-items: center; justify-content: center; }
+    /* ── MODALS ── */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 200; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
     .modal-overlay.show { display: flex; }
-    .modal { background: var(--panel); border: 1px solid var(--border2); border-radius: 12px; padding: 24px; width: 440px; max-width: 96vw; }
-    .modal-title { font-family: var(--cond); font-size: 16px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 16px; }
-    .mrow { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
-    .mlbl { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
-    .minp { background: var(--panel2); border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; color: var(--text); font-family: var(--sans); font-size: 14px; outline: none; transition: border-color .2s; width: 100%; }
+    .modal { background: var(--s1); border: 1px solid var(--border2); border-radius: 16px; padding: 28px; width: 460px; max-width: 96vw; box-shadow: 0 32px 80px rgba(0,0,0,.6); }
+    .modal-title { font-family: var(--head); font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+    .mrow { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+    .mlbl { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); }
+    .minp {
+      background: var(--s2); border: 1px solid var(--border2); border-radius: 8px;
+      padding: 11px 16px; color: var(--text); font-family: var(--body);
+      font-size: 14px; outline: none; transition: border-color .15s; width: 100%;
+    }
     .minp:focus { border-color: var(--accent); }
-    .mhint { font-size: 11px; color: var(--muted); margin-top: 3px; }
-    .mbtns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
-    .msearch-results { margin-top: 6px; background: var(--panel2); border: 1px solid var(--border2); border-radius: 8px; overflow: hidden; display: none; max-height: 240px; overflow-y: auto; }
+    .mbtns { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+    .msearch-results { margin-top: 8px; background: var(--s2); border: 1px solid var(--border2); border-radius: 10px; overflow: hidden; display: none; max-height: 260px; overflow-y: auto; }
     .msearch-results.show { display: block; }
-    .msr-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; cursor: pointer; transition: background .15s; border-bottom: 1px solid var(--border); }
+    .msr-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; cursor: pointer; transition: background .12s; border-bottom: 1px solid var(--border); }
     .msr-item:last-child { border-bottom: none; }
-    .msr-item:hover { background: rgba(82,165,240,.1); }
-    .msr-item img { width: 44px; height: 32px; object-fit: contain; }
-    .msr-name { flex: 1; font-size: 12px; color: var(--text); min-width: 0; }
-    .msr-price { font-size: 12px; font-family: var(--mono); color: var(--gold); }
-    .selected-pill { background: rgba(82,165,240,.1); border: 1px solid rgba(82,165,240,.3); border-radius: 6px; padding: 8px 12px; font-size: 13px; font-weight: 500; color: var(--accent); }
+    .msr-item:hover { background: var(--s3); }
+    .msr-item img { width: 46px; height: 34px; object-fit: contain; border-radius: 4px; }
+    .msr-name { flex: 1; font-size: 13px; color: var(--text); min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .msr-price { font-size: 13px; font-family: var(--mono); font-weight: 500; color: var(--gold); }
+    .selected-pill { background: rgba(79,156,249,.1); border: 1px solid rgba(79,156,249,.35); border-radius: 8px; padding: 10px 14px; font-size: 14px; font-weight: 500; color: var(--accent); font-family: var(--body); }
+
+    /* ── UTILS ── */
+    .up { color: var(--green); } .dn { color: var(--red); } .nu { color: var(--sub); }
     .spin { display: inline-block; width: 13px; height: 13px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .toast-wrap { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 300; pointer-events: none; }
-    .toast { background: var(--panel2); border: 1px solid var(--border2); border-radius: 8px; padding: 10px 16px; font-size: 13px; color: var(--text); animation: tin .2s ease; max-width: 300px; }
-    .toast.ok { border-color: rgba(61,214,140,.4); } .toast.err { border-color: rgba(240,96,96,.4); color: var(--red); }
-    @keyframes tin { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-    .actions-row { display: flex; gap: 8px; justify-content: flex-end; }
-    @media (max-width: 700px) { .body { grid-template-columns: 1fr; } .sidebar { display: none; } .stats-grid, .portfolio-grid { grid-template-columns: repeat(2, 1fr); } }
+    .toast-wrap { position: fixed; bottom: 22px; right: 22px; display: flex; flex-direction: column; gap: 8px; z-index: 400; pointer-events: none; }
+    .toast { background: var(--s2); border: 1px solid var(--border2); border-radius: 10px; padding: 12px 18px; font-size: 13px; color: var(--text); animation: tin .2s ease; max-width: 320px; box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+    .toast.ok { border-color: rgba(34,216,122,.4); } .toast.err { border-color: rgba(240,82,82,.4); color: var(--red); }
+    @keyframes tin { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .actions-row { display: flex; gap: 10px; justify-content: flex-end; }
+    @media (max-width: 768px) { .body { grid-template-columns: 1fr; } .sidebar { display: none; } .stats-row, .pf-grid { grid-template-columns: repeat(2, 1fr); } }
   </style>
 </head>
 <body>
 <div class="layout">
+  <!-- TOPBAR -->
   <div class="topbar">
     <div class="logo"><div class="logo-sq">CS</div>Price Tracker</div>
     <div class="search-wrap">
-      <input type="text" id="searchInput" placeholder="Szukaj skórki na Steam Market..." autocomplete="off" />
+      <input type="text" class="search-inp" id="searchInput" placeholder="Szukaj skórki na Steam Market..." autocomplete="off" />
       <div class="search-dropdown" id="searchDrop"></div>
     </div>
     <div class="topbar-right">
-      <div class="dot" id="sDot"></div>
-      <div class="status-txt" id="sTxt">Łączenie...</div>
+      <div class="status-pill">
+        <div class="dot" id="sDot"></div>
+        <div class="status-txt" id="sTxt">—</div>
+      </div>
       <div id="guestButtons" style="display:flex;gap:8px">
         <button class="btn ghost" onclick="openAuthModal()">Zaloguj</button>
         <button class="btn gold" onclick="openRegisterModal()">Rejestracja</button>
@@ -221,36 +368,38 @@
       <div class="user-badge" id="userBadge" style="display:none" onclick="toggleUserDropdown(event)">
         <div class="user-avatar" id="userAvatar">?</div>
         <div class="user-email" id="userEmail">—</div>
-        <div class="user-dropdown" id="userDropdown">
-          <div class="user-dropdown-item" style="color:var(--muted);font-size:11px;cursor:default" id="userDropdownEmail">—</div>
-          <div class="user-dropdown-item danger" onclick="logout()">Wyloguj</div>
+        <div class="user-dropdown">
+          <div class="udrop-email" id="userDropdownEmail">—</div>
+          <div class="udrop-item danger" onclick="logout()">Wyloguj</div>
         </div>
       </div>
     </div>
   </div>
 
   <div class="body">
+    <!-- SIDEBAR -->
     <div class="sidebar">
       <div class="sidebar-top">
-        <button class="btn" style="width:100%;margin-bottom:4px" onclick="openModal()">+ Dodaj przedmiot</button>
+        <button class="btn" style="width:100%" onclick="openModal()">+ Dodaj przedmiot</button>
       </div>
       <div id="loginBanner" class="login-banner" style="display:none">
-        <a onclick="openAuthModal()">Zaloguj się</a>, by obserwować przedmioty
+        <a onclick="openAuthModal()">Zaloguj się</a>, by obserwować skórki
       </div>
-      <div class="s-label">Obserwowane (<span id="cnt">0</span>)</div>
+      <div class="s-section">Obserwowane (<span id="cnt">0</span>)</div>
       <div class="watchlist" id="wlist"></div>
       <div class="sidebar-footer">
-        <button class="btn ghost" style="width:100%" onclick="refreshAll()" id="rafBtn">⟳ Odśwież wszystko</button>
-        <div class="refresh-note" id="rafNote">Auto-odświeżanie co 1 godzinę</div>
+        <button class="btn ghost" style="width:100%;font-size:12px" onclick="refreshAll()" id="rafBtn">⟳ Odśwież wszystko</button>
+        <div class="refresh-note" id="rafNote">auto co 1h</div>
       </div>
     </div>
 
+    <!-- MAIN -->
     <div class="main" id="main">
       <div class="empty-state">
-        <div class="empty-icon">🎯</div>
+        <div class="empty-icon">📊</div>
         <div class="empty-title">Brak wybranego przedmiotu</div>
-        <div style="font-size:13px">Dodaj skórki z listy po lewej i śledź ich ceny</div>
-        <button class="btn" style="margin-top:14px" onclick="openModal()">+ Dodaj pierwszy przedmiot</button>
+        <div class="empty-sub">Dodaj skórki z listy i śledź ich ceny</div>
+        <button class="btn" style="margin-top:6px" onclick="openModal()">+ Dodaj pierwszy przedmiot</button>
       </div>
     </div>
   </div>
@@ -259,14 +408,14 @@
 <!-- MODAL: dodaj przedmiot -->
 <div class="modal-overlay" id="modal">
   <div class="modal">
-    <div class="modal-title">Dodaj przedmiot do śledzenia</div>
+    <div class="modal-title">Dodaj przedmiot</div>
     <div class="mrow">
       <div class="mlbl">Wyszukaj na Steam Market</div>
       <input class="minp" type="text" id="mSearch" placeholder="np. AK-47 | Redline Field-Tested" autocomplete="off" />
       <div class="msearch-results" id="mResults"></div>
     </div>
     <div class="mrow" id="mSelRow" style="display:none">
-      <div class="mlbl">Wybrany</div>
+      <div class="mlbl">Wybrany przedmiot</div>
       <div class="selected-pill" id="mSelName"></div>
     </div>
     <div class="mbtns">
@@ -293,9 +442,9 @@
 <!-- MODAL: rejestracja -->
 <div class="modal-overlay" id="register-modal">
   <div class="modal">
-    <div class="modal-title">Rejestracja</div>
+    <div class="modal-title">Utwórz konto</div>
     <div class="mrow"><div class="mlbl">Email</div><input id="reg-email" class="minp" type="email" placeholder="email@example.com" autocomplete="email" /></div>
-    <div class="mrow"><div class="mlbl">Hasło</div><input id="reg-password" class="minp" type="password" placeholder="••••••••" autocomplete="new-password" /></div>
+    <div class="mrow"><div class="mlbl">Hasło</div><input id="reg-password" class="minp" type="password" placeholder="min. 6 znaków" autocomplete="new-password" /></div>
     <div class="mrow"><div class="mlbl">Powtórz hasło</div><input id="reg-password2" class="minp" type="password" placeholder="••••••••" autocomplete="new-password" /></div>
     <div class="mbtns">
       <button class="btn ghost" onclick="closeRegisterModal()">Anuluj</button>
@@ -307,567 +456,652 @@
 <div class="toast-wrap" id="toasts"></div>
 
 <script>
-  const API = '/api';
-  let items = [], activeId = null, chart = null, chartRange = '7d', fullHistory = [];
-  let mSelected = null, mSearchT = null, topSearchT = null;
-  const searchCache = {};
+const API = '/api';
+let items = [], activeId = null, chart = null, chartRange = '7d', fullHistory = [];
+let mSelected = null, mSearchT = null, topSearchT = null;
+const searchCache = {};
 
-  const $ = id => document.getElementById(id);
-  const fmt = p => p != null ? parseFloat(p).toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' zł' : '—';
-  const fmtN = p => p != null ? parseFloat(p).toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—';
-  const fmtPct = p => (p > 0 ? '+' : '') + parseFloat(p).toFixed(2) + '%';
-  const fmtDate = ts => new Date(ts).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: '2-digit' });
+const $ = id => document.getElementById(id);
+const fmt  = p => p != null ? parseFloat(p).toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' zł' : '—';
+const fmtN = p => p != null ? parseFloat(p).toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—';
+const fmtPct = p => (p >= 0 ? '+' : '') + parseFloat(p).toFixed(2) + '%';
+const fmtDate = ts => new Date(ts).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: '2-digit' });
 
-  function timeAgo(ts) {
-    if (!ts) return 'nigdy';
-    const s = (Date.now() - ts) / 1000;
-    if (s < 60) return 'przed chwilą';
-    if (s < 3600) return Math.floor(s / 60) + ' min temu';
-    if (s < 86400) return Math.floor(s / 3600) + ' h temu';
-    return Math.floor(s / 86400) + ' d temu';
+function timeAgo(ts) {
+  if (!ts) return 'nigdy';
+  const s = (Date.now() - ts) / 1000;
+  if (s < 60) return 'przed chwilą';
+  if (s < 3600) return Math.floor(s / 60) + ' min temu';
+  if (s < 86400) return Math.floor(s / 3600) + ' h temu';
+  return Math.floor(s / 86400) + ' d temu';
+}
+
+function wearKey(name) {
+  const n = name.toLowerCase();
+  if (n.includes('factory new')) return 'fn';
+  if (n.includes('minimal wear')) return 'mw';
+  if (n.includes('field-tested')) return 'ft';
+  if (n.includes('well-worn')) return 'ww';
+  if (n.includes('battle-scarred')) return 'bs';
+  return '';
+}
+const WEAR = { fn: ['Factory New','wear-fn'], mw: ['Minimal Wear','wear-mw'], ft: ['Field-Tested','wear-ft'], ww: ['Well-Worn','wear-ww'], bs: ['Battle-Scarred','wear-bs'] };
+
+function toast(msg, type = '') {
+  const el = document.createElement('div');
+  el.className = 'toast ' + type; el.textContent = msg;
+  $('toasts').appendChild(el); setTimeout(() => el.remove(), 3500);
+}
+
+// ── AUTH ──
+function authHeaders(json = false) {
+  const t = localStorage.getItem('token');
+  return { ...(json ? { 'Content-Type': 'application/json' } : {}), ...(t ? { Authorization: 'Bearer ' + t } : {}) };
+}
+function isLoggedIn() { return !!localStorage.getItem('token'); }
+
+function updateAuthUI() {
+  const ok = isLoggedIn();
+  $('guestButtons').style.display = ok ? 'none' : 'flex';
+  $('userBadge').style.display    = ok ? 'flex'  : 'none';
+  $('loginBanner').style.display  = ok ? 'none'  : 'block';
+  if (ok) {
+    const email = localStorage.getItem('userEmail') || '—';
+    $('userAvatar').textContent = email !== '—' ? email[0].toUpperCase() : '?';
+    $('userEmail').textContent = email;
+    $('userDropdownEmail').textContent = email;
   }
+}
 
-  function wearKey(name) {
-    const n = name.toLowerCase();
-    if (n.includes('factory new')) return 'fn';
-    if (n.includes('minimal wear')) return 'mw';
-    if (n.includes('field-tested')) return 'ft';
-    if (n.includes('well-worn')) return 'ww';
-    if (n.includes('battle-scarred')) return 'bs';
-    return '';
-  }
-  const WEAR_NAME = { fn: 'Factory New', mw: 'Minimal Wear', ft: 'Field-Tested', ww: 'Well-Worn', bs: 'Battle-Scarred' };
+function toggleUserDropdown(e) { e.stopPropagation(); $('userBadge').classList.toggle('open'); }
+document.addEventListener('click', () => $('userBadge').classList.remove('open'));
 
-  function toast(msg, type = '') {
-    const el = document.createElement('div');
-    el.className = 'toast ' + type;
-    el.textContent = msg;
-    $('toasts').appendChild(el);
-    setTimeout(() => el.remove(), 3500);
-  }
+function logout() {
+  localStorage.removeItem('token'); localStorage.removeItem('userEmail');
+  items = []; activeId = null;
+  $('cnt').textContent = '0'; $('wlist').innerHTML = '';
+  showEmpty('Zaloguj się, by obserwować skórki', true);
+  updateAuthUI(); toast('Wylogowano', 'ok');
+}
 
-  function authHeaders(includeJson = false) {
-    const token = localStorage.getItem('token');
-    return { ...(includeJson ? { 'Content-Type': 'application/json' } : {}), ...(token ? { Authorization: 'Bearer ' + token } : {}) };
-  }
-  function isLoggedIn() { return !!localStorage.getItem('token'); }
+function showEmpty(sub = 'Dodaj skórki z listy i śledź ich ceny', showLogin = false) {
+  $('main').innerHTML = `
+    <div class="empty-state">
+      <div class="empty-icon">📊</div>
+      <div class="empty-title">Brak wybranego przedmiotu</div>
+      <div class="empty-sub">${sub}</div>
+      <button class="btn" style="margin-top:8px" onclick="${showLogin ? 'openAuthModal' : 'openModal'}()">
+        ${showLogin ? 'Zaloguj się' : '+ Dodaj pierwszy przedmiot'}
+      </button>
+    </div>`;
+}
 
-  function updateAuthUI() {
-    const loggedIn = isLoggedIn();
-    $('guestButtons').style.display = loggedIn ? 'none' : 'flex';
-    $('userBadge').style.display = loggedIn ? 'flex' : 'none';
-    $('loginBanner').style.display = loggedIn ? 'none' : 'block';
-    if (loggedIn) {
-      const email = localStorage.getItem('userEmail') || '—';
-      $('userAvatar').textContent = email !== '—' ? email[0].toUpperCase() : '?';
-      $('userEmail').textContent = email;
-      $('userDropdownEmail').textContent = email;
-    }
-  }
-
-  function toggleUserDropdown(e) { e.stopPropagation(); $('userBadge').classList.toggle('open'); }
-  document.addEventListener('click', () => $('userBadge').classList.remove('open'));
-
-  function logout() {
-    localStorage.removeItem('token'); localStorage.removeItem('userEmail');
-    items = []; activeId = null;
-    $('cnt').textContent = '0'; $('wlist').innerHTML = '';
-    $('main').innerHTML = `<div class="empty-state"><div class="empty-icon">🎯</div><div class="empty-title">Brak wybranego przedmiotu</div><div style="font-size:13px">Zaloguj się, by obserwować skórki</div><button class="btn" style="margin-top:14px" onclick="openAuthModal()">Zaloguj się</button></div>`;
-    updateAuthUI(); toast('Wylogowano', 'ok');
-  }
-
-  // ── WATCHLIST ──
-  async function loadWatchlist() {
-    if (!isLoggedIn()) { renderSidebar(); return; }
-    try {
-      const r = await fetch(API + '/watchlist', { headers: authHeaders() });
-      if (r.status === 401) { logout(); return; }
-      items = await r.json();
-      $('cnt').textContent = items.length;
-      renderSidebar();
-      // Odśwież widok aktywnego itemu jeśli jest
-      if (activeId) {
-        const item = items.find(w => w.id === activeId);
-        if (item) renderMain(item);
-      }
-    } catch (e) { console.error(e); }
-  }
-
-  function pnlClass(pct) { return pct > 0.3 ? 'up' : pct < -0.3 ? 'dn' : 'nu'; }
-  function pnlArrow(pct) { return pct > 0.3 ? '▲' : pct < -0.3 ? '▼' : '—'; }
-
-  function renderSidebar() {
-    const el = $('wlist');
-    if (!items.length) {
-      el.innerHTML = '<div style="padding:20px 14px;color:var(--muted);font-size:12px;text-align:center">Brak przedmiotów.<br>Dodaj coś, by zacząć śledzić.</div>';
-      return;
-    }
-    el.innerHTML = items.map(item => {
-      const pct = item.pnlPct;
-      const cls = pct != null ? pnlClass(pct) : 'nu';
-      const arrow = pct != null ? pnlArrow(pct) : '';
-      const hasPosition = item.totalQty > 0;
-      return `
-        <div class="wcard ${item.id === activeId ? 'active' : ''}" onclick="selectItem(${item.id})">
-          <div class="wc-name">${item.name}</div>
-          <div class="wc-row">
-            <span class="wc-price">${fmt(item.currentPrice)}</span>
-            ${pct != null ? `<span class="wc-chg ${cls}">${arrow} ${Math.abs(pct).toFixed(1)}%</span>` : ''}
-          </div>
-          ${hasPosition ? `
-            <div class="wc-meta">
-              ${item.totalQty} szt · śr. ${fmt(item.avgBuyPrice)}
-              ${item.totalPnl != null ? `· <span class="${cls}">${item.totalPnl >= 0 ? '+' : ''}${fmt(item.totalPnl)}</span>` : ''}
-            </div>` : ''}
-          <div class="wc-time">${timeAgo(item.lastUpdated)}</div>
-          <button class="wc-del" onclick="deleteItem(event,${item.id})" title="Usuń">✕</button>
-        </div>`;
-    }).join('');
-  }
-
-  async function selectItem(id) {
-    activeId = Number(id);
+// ── WATCHLIST ──
+async function loadWatchlist() {
+  if (!isLoggedIn()) { renderSidebar(); return; }
+  try {
+    const r = await fetch(API + '/watchlist', { headers: authHeaders() });
+    if (r.status === 401) { logout(); return; }
+    items = await r.json();
+    $('cnt').textContent = items.length;
     renderSidebar();
-    const item = items.find(w => w.id === activeId);
-    if (!item) return;
-    chartRange = '7d';
-    renderMain(item);
-    try {
-      const r = await fetch(`${API}/history/${id}`, { headers: authHeaders() });
-      fullHistory = await r.json();
-      renderChart(); updateDayChange();
-    } catch (e) { console.error(e); }
+    if (activeId) {
+      const item = items.find(w => w.id === activeId);
+      if (item) renderMain(item);
+    }
+  } catch (e) { console.error(e); }
+}
+
+function pCls(pct) { return pct == null ? 'nu' : pct > 0.3 ? 'up' : pct < -0.3 ? 'dn' : 'nu'; }
+function pArr(pct) { return pct == null ? '' : pct > 0.3 ? '▲' : pct < -0.3 ? '▼' : '—'; }
+
+function renderSidebar() {
+  const el = $('wlist');
+  if (!items.length) {
+    el.innerHTML = '<div style="padding:24px 16px;color:var(--dim);font-size:12px;text-align:center;font-family:var(--mono)">Brak przedmiotów.<br>Dodaj coś powyżej.</div>';
+    return;
   }
+  el.innerHTML = items.map(item => {
+    const pct = item.pnlPct; const cls = pCls(pct); const arr = pArr(pct);
+    return `
+      <div class="wcard ${item.id === activeId ? 'active' : ''}" onclick="selectItem(${item.id})">
+        <div class="wc-name">${item.name}</div>
+        <div class="wc-price-row">
+          <span class="wc-price">${fmt(item.currentPrice)}</span>
+          ${pct != null ? `<span class="wc-pct ${cls}">${arr} ${Math.abs(pct).toFixed(1)}%</span>` : ''}
+        </div>
+        ${item.totalQty > 0 ? `
+          <div class="wc-stats">
+            <div class="wc-stat"><span>${item.totalQty}</span> szt</div>
+            <div class="wc-stat">śr. <span>${fmt(item.avgBuyPrice)}</span></div>
+            ${item.totalPnl != null ? `<div class="wc-stat ${cls}"><span>${item.totalPnl >= 0 ? '+' : ''}${fmt(item.totalPnl)}</span></div>` : ''}
+          </div>` : ''}
+        <div class="wc-time">${timeAgo(item.lastUpdated)}</div>
+        <button class="wc-del" onclick="deleteItem(event,${item.id})" title="Usuń">×</button>
+      </div>`;
+  }).join('');
+}
 
-  function renderMain(item) {
-    const wk = wearKey(item.name);
-    const pct = item.pnlPct;
-    const cls = pct != null ? pnlClass(pct) : 'nu';
-    const arrow = pct != null ? pnlArrow(pct) : '';
-    const hasPosition = item.totalQty > 0;
+async function selectItem(id) {
+  activeId = Number(id); renderSidebar();
+  const item = items.find(w => w.id === activeId);
+  if (!item) return;
+  chartRange = '7d'; renderMain(item);
+  try {
+    const r = await fetch(`${API}/history/${id}`, { headers: authHeaders() });
+    fullHistory = await r.json();
+    renderChart(); updateDayChange();
+  } catch (e) { console.error(e); }
+}
 
-    $('main').innerHTML = `
-      <!-- HEADER -->
+function renderMain(item) {
+  const wk = wearKey(item.name);
+  const wearBadge = wk && WEAR[wk] ? `<span class="wear-badge ${WEAR[wk][1]}">${WEAR[wk][0]}</span>` : '';
+  const pct = item.pnlPct; const cls = pCls(pct); const arr = pArr(pct);
+
+  $('main').innerHTML = `
+    <!-- HEADER CARD -->
+    <div class="card" style="padding:20px 24px">
       <div class="item-header">
-        <div class="item-img">
-          ${item.imageUrl ? `<img src="${item.imageUrl}" alt="" onerror="this.style.display='none'"/>` : csPlaceholder()}
+        <div class="item-img-wrap">
+          ${item.imageUrl ? `<img src="${item.imageUrl}" alt="" onerror="this.style.display='none'"/>` : svgPlaceholder()}
         </div>
         <div class="item-info">
           <div class="item-name">${item.name}</div>
-          <div class="item-meta">${wk ? `<span class="tag ${wk}">${WEAR_NAME[wk]}</span>&nbsp;` : ''}CS2 · Steam Market</div>
+          <div class="item-sub">
+            ${wearBadge}
+            <span class="item-platform">CS2 · Steam Market</span>
+          </div>
         </div>
         <div class="price-block">
-          <div class="price-main">${fmt(item.currentPrice)}</div>
-          <div class="price-chg nu" id="dayChgRow">Ładowanie historii...</div>
+          <div class="price-big">${fmt(item.currentPrice)}</div>
+          <div class="price-change nu" id="dayChgRow">Ładowanie…</div>
         </div>
       </div>
+    </div>
 
-      <!-- STATS -->
-      <div class="stats-grid">
-        <div class="stat"><div class="stat-lbl">Cena minimalna</div><div class="stat-val" style="color:var(--gold)">${fmt(item.currentPrice)}</div></div>
-        <div class="stat"><div class="stat-lbl">Mediana 24h</div><div class="stat-val">${fmt(item.currentMedian)}</div></div>
-        <div class="stat"><div class="stat-lbl">Wolumen 24h</div><div class="stat-val">${(item.currentVolume || 0).toLocaleString('pl-PL')}</div></div>
-        <div class="stat"><div class="stat-lbl">Aktualizacja</div><div class="stat-val" style="font-size:13px;color:var(--muted2)">${timeAgo(item.lastUpdated)}</div></div>
+    <!-- STATS -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Cena minimalna</div>
+        <div class="stat-value gold">${fmt(item.currentPrice)}</div>
       </div>
+      <div class="stat-card">
+        <div class="stat-label">Mediana 24h</div>
+        <div class="stat-value">${fmt(item.currentMedian)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Wolumen 24h</div>
+        <div class="stat-value">${(item.currentVolume || 0).toLocaleString('pl-PL')}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Aktualizacja</div>
+        <div class="stat-value" style="font-size:14px;color:var(--sub)">${timeAgo(item.lastUpdated)}</div>
+      </div>
+    </div>
 
-      <!-- PORTFOLIO SUMMARY -->
-      ${hasPosition ? `
-      <div class="portfolio-box">
-        <div class="purch-title" style="margin-bottom:12px">Podsumowanie pozycji</div>
-        <div class="portfolio-grid">
-          <div class="pf-item"><div class="pf-lbl">Ilość</div><div class="pf-val" style="color:var(--accent)">${item.totalQty} szt.</div></div>
-          <div class="pf-item"><div class="pf-lbl">Śr. cena zakupu</div><div class="pf-val" style="color:var(--gold)">${fmt(item.avgBuyPrice)}</div></div>
-          <div class="pf-item"><div class="pf-lbl">Łączny koszt</div><div class="pf-val">${fmt(item.totalSpent)}</div></div>
-          <div class="pf-item"><div class="pf-lbl">Wartość teraz</div><div class="pf-val" style="color:var(--gold)">${fmt(item.totalValue)}</div></div>
-          <div class="pf-item">
-            <div class="pf-lbl">P&L łącznie</div>
-            <div class="pf-val ${cls}">
-              ${item.totalPnl != null ? (item.totalPnl >= 0 ? '+' : '') + fmt(Math.abs(item.totalPnl)) : '—'}
-              ${pct != null ? `<span style="font-size:12px"> (${fmtPct(pct)})</span>` : ''}
-            </div>
+    <!-- PORTFOLIO -->
+    ${item.totalQty > 0 ? `
+    <div class="card" style="padding:18px 0">
+      <div class="card-title" style="padding:0 24px">Podsumowanie pozycji</div>
+      <div class="pf-grid">
+        <div class="pf-cell"><div class="pf-label">Ilość</div><div class="pf-value accent">${item.totalQty} szt.</div></div>
+        <div class="pf-cell"><div class="pf-label">Śr. cena zakupu</div><div class="pf-value gold">${fmt(item.avgBuyPrice)}</div></div>
+        <div class="pf-cell"><div class="pf-label">Łączny koszt</div><div class="pf-value">${fmt(item.totalSpent)}</div></div>
+        <div class="pf-cell"><div class="pf-label">Wartość teraz</div><div class="pf-value gold">${fmt(item.totalValue)}</div></div>
+        <div class="pf-cell">
+          <div class="pf-label">P&L łącznie</div>
+          <div class="pf-value ${cls}">
+            ${item.totalPnl != null ? (item.totalPnl >= 0 ? '+' : '') + fmt(Math.abs(item.totalPnl)) : '—'}
+            ${pct != null ? `<div style="font-size:13px;font-weight:400;margin-top:2px">${fmtPct(pct)}</div>` : ''}
           </div>
-        </div>
-      </div>` : ''}
-
-      <!-- ZAKUPY -->
-      <div class="purch-box" id="purchBox">
-        <div class="purch-hdr">
-          <div class="purch-title">Moje zakupy</div>
-        </div>
-        <div id="purchTableWrap">${renderPurchasesTable(item)}</div>
-        <!-- FORMULARZ DODAWANIA -->
-        <div class="add-purch-form">
-          <div class="apf-group">
-            <div class="apf-lbl">Ilość</div>
-            <input class="apf-inp w-sm" type="number" id="apfQty" placeholder="np. 50" min="1" step="1" value="1"/>
-          </div>
-          <div class="apf-group">
-            <div class="apf-lbl">Cena za szt. (PLN)</div>
-            <input class="apf-inp w-md" type="number" id="apfPrice" placeholder="np. 3,00" min="0.01" step="0.01"/>
-          </div>
-          <div class="apf-group">
-            <div class="apf-lbl">Notatka (opcjonalnie)</div>
-            <input class="apf-inp w-lg" type="text" id="apfNote" placeholder="np. batch 1" maxlength="80"/>
-          </div>
-          <button class="btn" onclick="addPurchase(${item.id})">+ Dodaj zakup</button>
         </div>
       </div>
+    </div>` : ''}
 
-      <!-- CHART -->
-      <div class="chart-box">
-        <div class="chart-hdr">
-          <div class="chart-title">Historia cen (PLN)</div>
-          <div class="chart-tabs">
-            <div class="ctab ${chartRange === '24h' ? 'active' : ''}" onclick="setRange('24h')">24h</div>
-            <div class="ctab ${chartRange === '7d' ? 'active' : ''}" onclick="setRange('7d')">7 dni</div>
-            <div class="ctab ${chartRange === '30d' ? 'active' : ''}" onclick="setRange('30d')">30 dni</div>
-          </div>
-        </div>
-        <div class="chart-area"><canvas id="chartCanvas"></canvas></div>
+    <!-- ZAKUPY -->
+    <div class="card">
+      <div class="purch-header">
+        <div class="card-title" style="margin:0">Moje zakupy</div>
       </div>
+      <div class="purch-table-wrap" id="purchTable">${buildPurchasesTable(item)}</div>
+      <div class="add-form">
+        <div class="af-group">
+          <div class="af-label">Ilość</div>
+          <input class="af-inp w60" type="number" id="apfQty" placeholder="50" min="1" step="1" value="1"/>
+        </div>
+        <div class="af-group">
+          <div class="af-label">Cena / szt. (PLN)</div>
+          <input class="af-inp w120" type="number" id="apfPrice" placeholder="3,00" min="0.01" step="0.01"/>
+        </div>
+        <div class="af-group">
+          <div class="af-label">Notatka</div>
+          <input class="af-inp w180" type="text" id="apfNote" placeholder="np. batch 1, promocja…" maxlength="80"/>
+        </div>
+        <button class="btn" onclick="addPurchase(${item.id})">+ Dodaj zakup</button>
+      </div>
+    </div>
 
-      <div class="actions-row">
-        <button class="btn ghost sm" onclick="refreshOne(${item.id})">⟳ Odśwież cenę</button>
-      </div>`;
+    <!-- WYKRES -->
+    <div class="card">
+      <div class="chart-hdr">
+        <div class="card-title" style="margin:0">Historia cen (PLN)</div>
+        <div class="chart-tabs">
+          <div class="ctab ${chartRange==='24h'?'active':''}" onclick="setRange('24h')">24h</div>
+          <div class="ctab ${chartRange==='7d'?'active':''}" onclick="setRange('7d')">7 dni</div>
+          <div class="ctab ${chartRange==='30d'?'active':''}" onclick="setRange('30d')">30 dni</div>
+        </div>
+      </div>
+      <div class="chart-area"><canvas id="chartCanvas"></canvas></div>
+    </div>
+
+    <div class="actions-row">
+      <button class="btn ghost sm" onclick="refreshOne(${item.id})">⟳ Odśwież cenę</button>
+    </div>`;
+}
+
+function buildPurchasesTable(item) {
+  const purchases = item.purchases || [];
+  if (!purchases.length) return '<div class="purch-empty">Brak zakupów — dodaj pierwszą transakcję poniżej.</div>';
+  const cp = item.currentPrice ? parseFloat(item.currentPrice) : null;
+  const rows = purchases.map(p => {
+    const qty = Number(p.quantity), bp = parseFloat(p.buyPrice);
+    const cost = qty * bp;
+    const val  = cp ? cp * qty : null;
+    const pnl  = val != null ? val - cost : null;
+    const pct  = pnl != null ? (pnl / cost) * 100 : null;
+    const cls  = pCls(pct);
+    return `<tr>
+      <td><span class="pt-qty">${qty} szt.</span></td>
+      <td><span class="pt-price">${fmt(bp)}</span></td>
+      <td class="r"><span class="pt-cost">${fmt(cost)}</span></td>
+      <td class="r">${val != null ? `<span class="pt-value">${fmt(val)}</span>` : '<span class="nu">—</span>'}</td>
+      <td class="r">${pnl != null
+        ? `<span class="pt-pnl ${cls}">${pnl >= 0 ? '+' : ''}${fmt(Math.abs(pnl))}<br><span class="pt-pnl-pct">${fmtPct(pct)}</span></span>`
+        : '<span class="nu">—</span>'}</td>
+      <td class="r">
+        <span class="pt-date">${fmtDate(p.boughtAt)}</span>
+        ${p.note ? `<div class="pt-note">${p.note}</div>` : ''}
+      </td>
+      <td class="r"><button class="btn xs danger" onclick="deletePurchase(${item.id},${p.id})">✕</button></td>
+    </tr>`;
+  }).join('');
+  return `<table class="pt">
+    <thead><tr>
+      <th>Ilość</th><th>Cena / szt.</th><th class="r">Koszt</th>
+      <th class="r">Wartość</th><th class="r">P&L</th><th class="r">Data</th><th></th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+async function addPurchase(wid) {
+  const qty = parseInt($('apfQty').value), price = parseFloat($('apfPrice').value), note = $('apfNote').value.trim();
+  if (!qty || qty < 1 || !price || price <= 0) { toast('Podaj poprawną ilość i cenę', 'err'); return; }
+  try {
+    const r = await fetch(`${API}/purchases/${wid}`, { method: 'POST', headers: authHeaders(true), body: JSON.stringify({ quantity: qty, buyPrice: price, note: note || null }) });
+    if (!r.ok) throw new Error();
+    const updated = await r.json();
+    const idx = items.findIndex(w => w.id === wid);
+    if (idx !== -1) items[idx] = updated;
+    $('apfQty').value = '1'; $('apfPrice').value = ''; $('apfNote').value = '';
+    renderSidebar(); renderMain(updated); toast('Zakup dodany ✓', 'ok');
+  } catch { toast('Błąd dodawania zakupu', 'err'); }
+}
+
+async function deletePurchase(wid, pid) {
+  if (!confirm('Usunąć ten zakup?')) return;
+  try {
+    const r = await fetch(`${API}/purchases/${wid}/${pid}`, { method: 'DELETE', headers: authHeaders() });
+    if (!r.ok) throw new Error();
+    const updated = await r.json();
+    const idx = items.findIndex(w => w.id === wid);
+    if (idx !== -1) items[idx] = updated;
+    renderSidebar(); renderMain(updated); toast('Zakup usunięty', 'ok');
+  } catch { toast('Błąd usuwania', 'err'); }
+}
+
+function svgPlaceholder() {
+  return `<svg width="70" height="50" viewBox="0 0 70 50" fill="none"><rect x="8" y="18" width="34" height="11" rx="5" fill="#4f9cf9" opacity=".4"/><rect x="42" y="20" width="18" height="6" rx="3" fill="#4f9cf9" opacity=".2"/><rect x="14" y="27" width="9" height="13" rx="2" fill="#1a2235"/><circle cx="35" cy="23" r="3" fill="#f5c842" opacity=".6"/></svg>`;
+}
+
+// ── CHART ──
+function setRange(range) {
+  chartRange = range;
+  document.querySelectorAll('.ctab').forEach(t => {
+    t.className = 'ctab' + (['24h','7d','30d'].find(r => r === t.textContent.trim().replace(' dni','d').replace('7 dni','7d').replace('30 dni','30d')) === range ? ' active' : '');
+  });
+  // easier matching:
+  document.querySelectorAll('.ctab').forEach(t => {
+    const label = t.textContent.trim();
+    const match = (range==='24h'&&label==='24h')||(range==='7d'&&label==='7 dni')||(range==='30d'&&label==='30 dni');
+    t.className = 'ctab' + (match ? ' active' : '');
+  });
+  renderChart();
+}
+
+function renderChart() {
+  if (chart) { chart.destroy(); chart = null; }
+  const canvas = $('chartCanvas');
+  if (!canvas) return;
+
+  const cutoffs = { '24h': Date.now() - 864e5, '7d': Date.now() - 7*864e5, '30d': Date.now() - 30*864e5 };
+  let filtered = fullHistory.filter(h => h.ts >= (cutoffs[chartRange] || 0));
+
+  // Jeśli brak danych historycznych ale mamy aktualną cenę — wygeneruj punkty
+  if (!filtered.length && fullHistory.length > 0) {
+    filtered = fullHistory;
   }
 
-  function renderPurchasesTable(item) {
-    const purchases = item.purchases || [];
-    if (!purchases.length) {
-      return '<div class="purch-empty">Brak zakupów. Dodaj pierwszą transakcję poniżej.</div>';
+  if (!filtered.length) {
+    // Brak historii w ogóle
+    const canvas2 = $('chartCanvas');
+    if (canvas2) {
+      const ctx = canvas2.getContext('2d');
+      ctx.clearRect(0, 0, canvas2.width, canvas2.height);
+      ctx.fillStyle = '#4a5870';
+      ctx.font = '13px JetBrains Mono,monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('Ceny gromadzone co 1h — wróć jutro po więcej danych', canvas2.width / 2, 110);
     }
-    const currentPrice = item.currentPrice ? parseFloat(item.currentPrice) : null;
-    const rows = purchases.map(p => {
-      const qty = Number(p.quantity);
-      const bp = parseFloat(p.buyPrice);
-      const total = qty * bp;
-      const rowValue = currentPrice ? currentPrice * qty : null;
-      const rowPnl = rowValue != null ? rowValue - total : null;
-      const rowPnlPct = rowPnl != null ? (rowPnl / total) * 100 : null;
-      const cls = rowPnlPct != null ? pnlClass(rowPnlPct) : 'nu';
-      return `
-        <tr>
-          <td><span class="purch-qty">${qty} szt.</span></td>
-          <td><span class="purch-price">${fmt(bp)}</span></td>
-          <td><span class="purch-total">${fmt(total)}</span></td>
-          <td>${rowValue != null ? `<span class="purch-price">${fmt(rowValue)}</span>` : '<span class="nu">—</span>'}</td>
-          <td>${rowPnl != null
-            ? `<span class="purch-pnl ${cls}">${rowPnl >= 0 ? '+' : ''}${fmt(Math.abs(rowPnl))} <span style="font-size:10px">(${fmtPct(rowPnlPct)})</span></span>`
-            : '<span class="nu">—</span>'}</td>
-          <td><span class="purch-date">${fmtDate(p.boughtAt)}</span>${p.note ? `<br><span class="purch-note">${p.note}</span>` : ''}</td>
-          <td><button class="btn xs red" onclick="deletePurchase(${item.id}, ${p.id})">✕</button></td>
-        </tr>`;
-    }).join('');
-
-    return `
-      <table class="purch-table">
-        <thead><tr>
-          <th>Ilość</th><th>Cena / szt.</th><th>Koszt</th><th>Wartość</th><th>P&L</th><th>Data</th><th></th>
-        </tr></thead>
-        <tbody>${rows}</tbody>
-      </table>`;
+    return;
   }
 
-  async function addPurchase(watchlistId) {
-    const qty = parseInt($('apfQty').value);
-    const price = parseFloat($('apfPrice').value);
-    const note = $('apfNote').value.trim();
-    if (!qty || qty < 1 || !price || price <= 0) { toast('Podaj poprawną ilość i cenę', 'err'); return; }
-    try {
-      const r = await fetch(`${API}/purchases/${watchlistId}`, {
-        method: 'POST', headers: authHeaders(true),
-        body: JSON.stringify({ quantity: qty, buyPrice: price, note: note || null })
-      });
-      if (!r.ok) throw new Error();
-      const updatedItem = await r.json();
-      // Zaktualizuj lokalnie
-      const idx = items.findIndex(w => w.id === watchlistId);
-      if (idx !== -1) items[idx] = updatedItem;
-      $('apfQty').value = '1'; $('apfPrice').value = ''; $('apfNote').value = '';
-      renderSidebar();
-      renderMain(updatedItem);
-      toast('Zakup dodany ✓', 'ok');
-    } catch { toast('Błąd dodawania zakupu', 'err'); }
-  }
-
-  async function deletePurchase(watchlistId, purchaseId) {
-    if (!confirm('Usunąć ten zakup?')) return;
-    try {
-      const r = await fetch(`${API}/purchases/${watchlistId}/${purchaseId}`, { method: 'DELETE', headers: authHeaders() });
-      if (!r.ok) throw new Error();
-      const updatedItem = await r.json();
-      const idx = items.findIndex(w => w.id === watchlistId);
-      if (idx !== -1) items[idx] = updatedItem;
-      renderSidebar();
-      renderMain(updatedItem);
-      toast('Zakup usunięty', 'ok');
-    } catch { toast('Błąd usuwania zakupu', 'err'); }
-  }
-
-  function csPlaceholder() {
-    return `<svg width="64" height="44" viewBox="0 0 64 44" fill="none"><rect x="6" y="15" width="32" height="10" rx="4" fill="#52a5f0" opacity=".5"/><rect x="38" y="17" width="18" height="5" rx="2" fill="#52a5f0" opacity=".3"/><rect x="12" y="23" width="8" height="12" rx="2" fill="#1c2640"/><circle cx="32" cy="20" r="2.5" fill="#f0c040" opacity=".7"/></svg>`;
-  }
-
-  function setRange(range) {
-    chartRange = range;
-    document.querySelectorAll('.ctab').forEach(t => {
-      const label = t.textContent.trim();
-      t.className = 'ctab' + ((range === '24h' && label === '24h') || (range === '7d' && label === '7 dni') || (range === '30d' && label === '30 dni') ? ' active' : '');
-    });
-    renderChart();
-  }
-
-  function renderChart() {
-    if (chart) { chart.destroy(); chart = null; }
-    const canvas = $('chartCanvas');
-    if (!canvas) return;
-    const cutoffs = { '24h': Date.now() - 86400000, '7d': Date.now() - 7 * 86400000, '30d': Date.now() - 30 * 86400000 };
-    const filtered = fullHistory.filter(h => h.ts >= (cutoffs[chartRange] || 0));
-    if (!filtered.length) {
-      const ctx = canvas.getContext('2d');
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = '#5a7090'; ctx.font = '13px Barlow,sans-serif'; ctx.textAlign = 'center';
-      ctx.fillText('Brak danych dla tego okresu — ceny gromadzone co 1h', canvas.width / 2, 90);
-      return;
-    }
-    const labels = filtered.map(h => {
-      const d = new Date(h.ts);
-      return chartRange === '24h' ? d.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' }) : d.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit' });
-    });
-    chart = new Chart(canvas, {
-      type: 'line',
-      data: {
-        labels,
-        datasets: [
-          { label: 'Cena min.', data: filtered.map(h => +(h.lowest || 0).toFixed(2)), borderColor: '#52a5f0', backgroundColor: 'rgba(82,165,240,0.06)', borderWidth: 1.5, pointRadius: filtered.length > 60 ? 0 : 2, pointHoverRadius: 4, pointHoverBackgroundColor: '#f0c040', fill: true, tension: 0.3 },
-          { label: 'Mediana', data: filtered.map(h => +(h.median || 0).toFixed(2)), borderColor: 'rgba(240,192,64,0.45)', borderWidth: 1, borderDash: [4, 3], pointRadius: 0, fill: false, tension: 0.3 }
-        ]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
-        plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1c2640', borderColor: 'rgba(82,165,240,.3)', borderWidth: 1, titleColor: '#8099b8', bodyColor: '#d8e4f4', callbacks: { label: c => ' ' + c.dataset.label + ': ' + c.parsed.y.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' zł' } } },
-        scales: {
-          x: { grid: { color: 'rgba(82,165,240,.05)' }, ticks: { color: '#5a7090', font: { size: 10 }, maxTicksLimit: 10, autoSkip: true } },
-          y: { grid: { color: 'rgba(82,165,240,.07)' }, ticks: { color: '#5a7090', font: { size: 10 }, callback: v => v.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' zł' } }
-        }
-      }
-    });
-  }
-
-  function updateDayChange() {
-    const el = $('dayChgRow');
-    if (!el || fullHistory.length < 2) { if (el) el.textContent = 'Za mało danych'; return; }
-    const last = fullHistory[fullHistory.length - 1];
-    const prev = fullHistory.find(h => h.ts >= Date.now() - 86400000) || fullHistory[0];
-    if (!last.lowest || !prev.lowest) return;
-    const pct = ((last.lowest - prev.lowest) / prev.lowest) * 100;
-    el.className = 'price-chg ' + pnlClass(pct);
-    el.textContent = `${pnlArrow(pct)} ${Math.abs(pct).toFixed(2)}% (24h)`;
-  }
-
-  async function refreshOne(id) {
-    const btn = event.target;
-    btn.disabled = true; btn.textContent = '⟳ Pobieranie...';
-    try {
-      const r = await fetch(`${API}/refresh/${id}`, { method: 'POST', headers: authHeaders() });
-      if (!r.ok) throw new Error();
-      toast('Cena zaktualizowana ✓', 'ok');
-      await loadWatchlist();
-      const item = items.find(w => w.id === id);
-      if (item && activeId === id) {
-        renderMain(item);
-        const hr = await fetch(`${API}/history/${id}`, { headers: authHeaders() });
-        fullHistory = await hr.json();
-        renderChart(); updateDayChange();
-      }
-    } catch { toast('Błąd pobierania ceny ze Steam', 'err'); }
-    btn.disabled = false; btn.textContent = '⟳ Odśwież cenę';
-  }
-
-  async function refreshAll() {
-    const btn = $('rafBtn');
-    btn.disabled = true; btn.textContent = '⟳ Odświeżam...';
-    $('rafNote').textContent = 'Trwa odświeżanie (~3s/szt.)...';
-    try {
-      await fetch(`${API}/refresh-all`, { method: 'POST', headers: authHeaders() });
-      toast('Odświeżanie uruchomione w tle', 'ok');
-      const wait = items.length * 4000 + 3000;
-      setTimeout(async () => {
-        await loadWatchlist();
-        if (activeId) {
-          const item = items.find(w => w.id === activeId);
-          if (item) { renderMain(item); const hr = await fetch(`${API}/history/${activeId}`, { headers: authHeaders() }); fullHistory = await hr.json(); renderChart(); updateDayChange(); }
-        }
-        $('rafNote').textContent = 'Zaktualizowano: ' + new Date().toLocaleTimeString('pl-PL');
-      }, wait);
-    } catch { toast('Błąd połączenia z backendem', 'err'); }
-    setTimeout(() => { btn.disabled = false; btn.textContent = '⟳ Odśwież wszystko'; }, 3000);
-  }
-
-  async function deleteItem(e, id) {
-    e.stopPropagation(); id = Number(id);
-    if (!confirm('Usunąć ten przedmiot z obserwowanych?')) return;
-    try {
-      await fetch(`${API}/watchlist/${id}`, { method: 'DELETE', headers: authHeaders() });
-      if (activeId === id) {
-        activeId = null;
-        $('main').innerHTML = `<div class="empty-state"><div class="empty-icon">🎯</div><div class="empty-title">Brak wybranego przedmiotu</div><div style="font-size:13px">Dodaj skórki z listy po lewej</div><button class="btn" style="margin-top:14px" onclick="openModal()">+ Dodaj przedmiot</button></div>`;
-      }
-      toast('Usunięto', 'ok'); await loadWatchlist();
-    } catch { toast('Błąd usuwania', 'err'); }
-  }
-
-  // ── MODAL: dodaj przedmiot ──
-  function openModal() {
-    if (!isLoggedIn()) { openAuthModal(); return; }
-    mSelected = null; $('mSearch').value = ''; $('mResults').className = 'msearch-results'; $('mResults').innerHTML = ''; $('mSelRow').style.display = 'none'; $('mAddBtn').disabled = true;
-    $('modal').classList.add('show'); setTimeout(() => $('mSearch').focus(), 80);
-  }
-  function closeModal() { $('modal').classList.remove('show'); }
-  $('modal').addEventListener('click', e => { if (e.target === $('modal')) closeModal(); });
-
-  $('mSearch').addEventListener('input', e => {
-    clearTimeout(mSearchT); const q = e.target.value.trim();
-    if (q.length < 3) { $('mResults').className = 'msearch-results'; return; }
-    mSearchT = setTimeout(() => doModalSearch(q), 450);
+  const labels = filtered.map(h => {
+    const d = new Date(h.ts);
+    return chartRange === '24h'
+      ? d.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })
+      : d.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit' });
   });
 
-  async function doModalSearch(q) {
-    const el = $('mResults');
-    el.className = 'msearch-results show';
-    el.innerHTML = '<div style="padding:12px;text-align:center;color:var(--muted);font-size:12px"><span class="spin"></span> Szukam na Steam...</div>';
+  const accentRgb = '79, 156, 249';
+  const goldRgb   = '245, 200, 66';
+
+  chart = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Cena min.',
+          data: filtered.map(h => +(h.lowest || 0).toFixed(2)),
+          borderColor: `rgb(${accentRgb})`,
+          backgroundColor: ctx => {
+            const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 220);
+            g.addColorStop(0, `rgba(${accentRgb},.18)`);
+            g.addColorStop(1, `rgba(${accentRgb},0)`);
+            return g;
+          },
+          borderWidth: 2,
+          pointRadius: filtered.length > 48 ? 0 : 3,
+          pointHoverRadius: 5,
+          pointHoverBackgroundColor: `rgb(${goldRgb})`,
+          pointHoverBorderColor: '#fff',
+          pointHoverBorderWidth: 2,
+          fill: true, tension: 0.35
+        },
+        {
+          label: 'Mediana',
+          data: filtered.map(h => +(h.median || 0).toFixed(2)),
+          borderColor: `rgba(${goldRgb},.5)`,
+          borderWidth: 1.5,
+          borderDash: [5, 4],
+          pointRadius: 0,
+          fill: false, tension: 0.35
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#0d1119',
+          borderColor: `rgba(${accentRgb},.3)`,
+          borderWidth: 1,
+          titleColor: '#8899bb',
+          bodyColor: '#e8f0fe',
+          padding: 12,
+          callbacks: {
+            label: c => '  ' + c.dataset.label + ':  ' + c.parsed.y.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' zł'
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(255,255,255,.04)' },
+          ticks: { color: '#4a5870', font: { size: 11, family: 'JetBrains Mono' }, maxTicksLimit: 10, autoSkip: true }
+        },
+        y: {
+          grid: { color: 'rgba(255,255,255,.05)' },
+          ticks: {
+            color: '#4a5870',
+            font: { size: 11, family: 'JetBrains Mono' },
+            callback: v => fmtN(v) + ' zł'
+          }
+        }
+      }
+    }
+  });
+}
+
+function updateDayChange() {
+  const el = $('dayChgRow');
+  if (!el) return;
+  if (fullHistory.length < 2) { el.textContent = 'Za mało danych historycznych'; return; }
+  const last = fullHistory[fullHistory.length - 1];
+  const prev = fullHistory.find(h => h.ts >= Date.now() - 864e5) || fullHistory[0];
+  if (!last.lowest || !prev.lowest) return;
+  const pct = ((last.lowest - prev.lowest) / prev.lowest) * 100;
+  el.className = 'price-change ' + pCls(pct);
+  el.textContent = `${pArr(pct)} ${Math.abs(pct).toFixed(2)}% zmiana 24h`;
+}
+
+// ── REFRESH ──
+async function refreshOne(id) {
+  const btn = event.target;
+  btn.disabled = true; btn.textContent = '⟳ Pobieranie…';
+  try {
+    const r = await fetch(`${API}/refresh/${id}`, { method: 'POST', headers: authHeaders() });
+    if (!r.ok) throw new Error();
+    toast('Cena zaktualizowana ✓', 'ok');
+    await loadWatchlist();
+    const item = items.find(w => w.id === id);
+    if (item && activeId === id) {
+      renderMain(item);
+      const hr = await fetch(`${API}/history/${id}`, { headers: authHeaders() });
+      fullHistory = await hr.json();
+      renderChart(); updateDayChange();
+    }
+  } catch { toast('Błąd pobierania ceny ze Steam', 'err'); }
+  btn.disabled = false; btn.textContent = '⟳ Odśwież cenę';
+}
+
+async function refreshAll() {
+  const btn = $('rafBtn');
+  btn.disabled = true; btn.textContent = '⟳ Odświeżam…';
+  $('rafNote').textContent = '~3s/szt…';
+  try {
+    await fetch(`${API}/refresh-all`, { method: 'POST', headers: authHeaders() });
+    toast('Odświeżanie uruchomione w tle', 'ok');
+    const wait = items.length * 4000 + 3000;
+    setTimeout(async () => {
+      await loadWatchlist();
+      if (activeId) {
+        const item = items.find(w => w.id === activeId);
+        if (item) { renderMain(item); const hr = await fetch(`${API}/history/${activeId}`, { headers: authHeaders() }); fullHistory = await hr.json(); renderChart(); updateDayChange(); }
+      }
+      $('rafNote').textContent = 'zaktualizowano ' + new Date().toLocaleTimeString('pl-PL');
+    }, wait);
+  } catch { toast('Błąd połączenia', 'err'); }
+  setTimeout(() => { btn.disabled = false; btn.textContent = '⟳ Odśwież wszystko'; }, 3000);
+}
+
+async function deleteItem(e, id) {
+  e.stopPropagation(); id = Number(id);
+  if (!confirm('Usunąć ten przedmiot z obserwowanych?')) return;
+  try {
+    await fetch(`${API}/watchlist/${id}`, { method: 'DELETE', headers: authHeaders() });
+    if (activeId === id) { activeId = null; showEmpty(); }
+    toast('Usunięto', 'ok'); await loadWatchlist();
+  } catch { toast('Błąd usuwania', 'err'); }
+}
+
+// ── MODAL: dodaj przedmiot ──
+function openModal() {
+  if (!isLoggedIn()) { openAuthModal(); return; }
+  mSelected = null; $('mSearch').value = '';
+  $('mResults').className = 'msearch-results'; $('mResults').innerHTML = '';
+  $('mSelRow').style.display = 'none'; $('mAddBtn').disabled = true;
+  $('modal').classList.add('show'); setTimeout(() => $('mSearch').focus(), 80);
+}
+function closeModal() { $('modal').classList.remove('show'); }
+$('modal').addEventListener('click', e => { if (e.target === $('modal')) closeModal(); });
+
+$('mSearch').addEventListener('input', e => {
+  clearTimeout(mSearchT); const q = e.target.value.trim();
+  if (q.length < 3) { $('mResults').className = 'msearch-results'; return; }
+  mSearchT = setTimeout(() => doModalSearch(q), 450);
+});
+
+async function doModalSearch(q) {
+  const el = $('mResults');
+  el.className = 'msearch-results show';
+  el.innerHTML = '<div style="padding:14px;text-align:center;color:var(--sub);font-size:12px"><span class="spin"></span> Szukam na Steam…</div>';
+  try {
+    const r = await fetch(`${API}/search?q=${encodeURIComponent(q)}`, { headers: authHeaders() });
+    const results = await r.json();
+    if (!results.length) { el.innerHTML = '<div style="padding:14px;text-align:center;color:var(--dim);font-size:12px">Brak wyników</div>'; return; }
+    el.innerHTML = results.slice(0, 8).map((item, i) => {
+      const key = 'modal_' + i; searchCache[key] = item;
+      return `<div class="msr-item" onclick="pickItem('${key}')">
+        ${item.imageUrl ? `<img src="${item.imageUrl}" alt=""/>` : '<div style="width:46px;height:34px"></div>'}
+        <div class="msr-name">${item.name}</div>
+        <div class="msr-price">${item.price != null ? fmt(item.price) : '—'}</div>
+      </div>`;
+    }).join('');
+  } catch { el.innerHTML = '<div style="padding:14px;text-align:center;color:var(--red);font-size:12px">Błąd połączenia</div>'; }
+}
+
+function pickItem(key) {
+  mSelected = searchCache[key]; if (!mSelected) return;
+  $('mSelName').textContent = mSelected.name; $('mSelRow').style.display = 'block';
+  $('mResults').className = 'msearch-results'; $('mSearch').value = mSelected.name;
+  $('mAddBtn').disabled = false;
+}
+
+async function addItem() {
+  if (!mSelected) return;
+  const btn = $('mAddBtn'); btn.disabled = true; btn.textContent = 'Dodawanie…';
+  try {
+    const r = await fetch(`${API}/watchlist`, { method: 'POST', headers: authHeaders(true), body: JSON.stringify({ name: mSelected.name, marketHashName: mSelected.marketHashName, imageUrl: mSelected.imageUrl }) });
+    if (r.status === 409) { toast('Ten przedmiot już jest na liście', 'err'); return; }
+    if (!r.ok) throw new Error();
+    const item = await r.json();
+    toast(`Dodano: ${item.name}`, 'ok'); closeModal(); await loadWatchlist(); selectItem(item.id);
+  } catch { toast('Błąd dodawania', 'err'); }
+  btn.disabled = false; btn.textContent = 'Dodaj do obserwowanych';
+}
+
+// ── TOP SEARCH ──
+$('searchInput').addEventListener('input', e => {
+  clearTimeout(topSearchT); const q = e.target.value.trim(); const dd = $('searchDrop');
+  if (q.length < 3) { dd.classList.remove('show'); return; }
+  topSearchT = setTimeout(async () => {
+    dd.classList.add('show'); dd.innerHTML = '<div class="search-hint"><span class="spin"></span> Szukam…</div>';
     try {
       const r = await fetch(`${API}/search?q=${encodeURIComponent(q)}`, { headers: authHeaders() });
-      const results = await r.json();
-      if (!results.length) { el.innerHTML = '<div style="padding:12px;text-align:center;color:var(--muted);font-size:12px">Brak wyników dla tej frazy</div>'; return; }
-      el.innerHTML = results.slice(0, 8).map((item, i) => {
-        const key = 'modal_' + i; searchCache[key] = item;
-        return `<div class="msr-item" onclick="pickItem('${key}')">
-          ${item.imageUrl ? `<img src="${item.imageUrl}" alt=""/>` : '<div style="width:44px;height:32px"></div>'}
-          <div class="msr-name">${item.name}</div>
-          <div class="msr-price">${item.price != null ? fmt(item.price) : '—'}</div>
+      const res = await r.json();
+      if (!res.length) { dd.innerHTML = '<div class="search-hint">Brak wyników</div>'; return; }
+      dd.innerHTML = res.slice(0, 6).map((item, i) => {
+        const key = 'top_' + i; searchCache[key] = item;
+        return `<div class="sdrop-item" onclick="quickPick('${key}')">
+          ${item.imageUrl ? `<img src="${item.imageUrl}" alt=""/>` : '<div style="width:46px;height:34px"></div>'}
+          <div class="sdrop-name">${item.name}</div>
+          <div class="sdrop-price">${item.price != null ? fmt(item.price) : '—'}</div>
+          <div class="sdrop-add">+ Dodaj</div>
         </div>`;
       }).join('');
-    } catch { el.innerHTML = '<div style="padding:12px;text-align:center;color:var(--red);font-size:12px">Błąd połączenia z backendem</div>'; }
-  }
+    } catch { dd.innerHTML = '<div class="search-hint" style="color:var(--red)">Backend offline</div>'; }
+  }, 400);
+});
+document.addEventListener('click', e => { if (!e.target.closest('.search-wrap')) $('searchDrop').classList.remove('show'); });
 
-  function pickItem(key) {
-    mSelected = searchCache[key]; if (!mSelected) return;
-    $('mSelName').textContent = mSelected.name; $('mSelRow').style.display = 'block';
-    $('mResults').className = 'msearch-results'; $('mSearch').value = mSelected.name; $('mAddBtn').disabled = false;
-  }
+function quickPick(key) {
+  mSelected = searchCache[key]; if (!mSelected) return;
+  $('searchDrop').classList.remove('show'); $('searchInput').value = '';
+  if (!isLoggedIn()) { openAuthModal(); return; }
+  $('mSearch').value = mSelected.name; $('mSelName').textContent = mSelected.name;
+  $('mSelRow').style.display = 'block'; $('mAddBtn').disabled = false;
+  $('modal').classList.add('show');
+}
 
-  async function addItem() {
-    if (!mSelected) return;
-    const btn = $('mAddBtn'); btn.disabled = true; btn.textContent = 'Dodawanie...';
+// ── AUTH ──
+function openAuthModal() { $('auth-email').value=''; $('auth-password').value=''; $('auth-modal').classList.add('show'); setTimeout(()=>$('auth-email').focus(),80); }
+function closeAuthModal() { $('auth-modal').classList.remove('show'); }
+$('auth-modal').addEventListener('click', e => { if(e.target===$('auth-modal')) closeAuthModal(); });
+function switchToRegister() { closeAuthModal(); openRegisterModal(); }
+
+async function login() {
+  const email=$('auth-email').value.trim(), pass=$('auth-password').value;
+  if (!email||!pass) { toast('Podaj email i hasło','err'); return; }
+  try {
+    const res=await fetch(`${API}/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
+    if (!res.ok) { toast('Błędne dane logowania','err'); return; }
+    const data=await res.json();
+    if (data.token) { localStorage.setItem('token',data.token); localStorage.setItem('userEmail',email); }
+    toast('Zalogowano ✓','ok'); closeAuthModal(); updateAuthUI(); loadWatchlist();
+  } catch { toast('Błąd połączenia','err'); }
+}
+
+function openRegisterModal() { $('reg-email').value=''; $('reg-password').value=''; $('reg-password2').value=''; $('register-modal').classList.add('show'); setTimeout(()=>$('reg-email').focus(),80); }
+function closeRegisterModal() { $('register-modal').classList.remove('show'); }
+$('register-modal').addEventListener('click', e => { if(e.target===$('register-modal')) closeRegisterModal(); });
+
+async function registerUser() {
+  const email=$('reg-email').value.trim(), p1=$('reg-password').value, p2=$('reg-password2').value;
+  if (!email||!p1||!p2) { toast('Wypełnij wszystkie pola','err'); return; }
+  if (p1!==p2) { toast('Hasła się nie zgadzają','err'); return; }
+  try {
+    const res=await fetch(`${API}/register`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:p1})});
+    if (!res.ok) { const err=await res.json(); toast(err.error==='email_exists'?'Ten email już istnieje':'Błąd rejestracji','err'); return; }
+    const data=await res.json();
+    if (data.token) { localStorage.setItem('token',data.token); localStorage.setItem('userEmail',email); }
+    toast('Konto utworzone ✓','ok'); closeRegisterModal(); updateAuthUI(); loadWatchlist();
+  } catch { toast('Błąd połączenia','err'); }
+}
+
+$('auth-password').addEventListener('keydown', e => { if(e.key==='Enter') login(); });
+$('auth-email').addEventListener('keydown', e => { if(e.key==='Enter') $('auth-password').focus(); });
+$('reg-password2').addEventListener('keydown', e => { if(e.key==='Enter') registerUser(); });
+
+// ── STATUS ──
+async function checkStatus() {
+  try {
+    const r = await fetch(API+'/health',{signal:AbortSignal.timeout(4000)});
+    if (r.ok) { $('sDot').className='dot'; $('sTxt').textContent='online'; }
+    else throw new Error();
+  } catch { $('sDot').className='dot off'; $('sTxt').textContent='offline'; }
+}
+
+// ── INIT ──
+async function init() {
+  const token = localStorage.getItem('token');
+  if (token) {
     try {
-      const r = await fetch(`${API}/watchlist`, { method: 'POST', headers: authHeaders(true), body: JSON.stringify({ name: mSelected.name, marketHashName: mSelected.marketHashName, imageUrl: mSelected.imageUrl }) });
-      if (r.status === 409) { toast('Ten przedmiot już jest na liście', 'err'); return; }
-      if (!r.ok) throw new Error();
-      const item = await r.json();
-      toast(`Dodano: ${item.name}`, 'ok'); closeModal(); await loadWatchlist(); selectItem(item.id);
-    } catch { toast('Błąd dodawania — sprawdź połączenie', 'err'); }
-    btn.disabled = false; btn.textContent = 'Dodaj do obserwowanych';
+      const r = await fetch(API+'/watchlist',{headers:authHeaders()});
+      if (r.status===401) { localStorage.removeItem('token'); localStorage.removeItem('userEmail'); }
+      else { items=await r.json(); $('cnt').textContent=items.length; renderSidebar(); }
+    } catch {}
   }
+  updateAuthUI();
+}
 
-  // ── TOP SEARCH ──
-  $('searchInput').addEventListener('input', e => {
-    clearTimeout(topSearchT); const q = e.target.value.trim(); const dd = $('searchDrop');
-    if (q.length < 3) { dd.classList.remove('show'); return; }
-    topSearchT = setTimeout(async () => {
-      dd.classList.add('show'); dd.innerHTML = '<div class="search-hint"><span class="spin"></span> Szukam...</div>';
-      try {
-        const r = await fetch(`${API}/search?q=${encodeURIComponent(q)}`, { headers: authHeaders() });
-        const res = await r.json();
-        if (!res.length) { dd.innerHTML = '<div class="search-hint">Brak wyników</div>'; return; }
-        dd.innerHTML = res.slice(0, 6).map((item, i) => {
-          const key = 'top_' + i; searchCache[key] = item;
-          return `<div class="sdrop-item" onclick="quickPick('${key}')">
-            ${item.imageUrl ? `<img src="${item.imageUrl}" alt=""/>` : '<div style="width:44px;height:32px"></div>'}
-            <div class="sdrop-name">${item.name}</div>
-            <div class="sdrop-price">${item.price != null ? fmt(item.price) : '—'}</div>
-            <div class="sdrop-add">+ Dodaj</div>
-          </div>`;
-        }).join('');
-      } catch { dd.innerHTML = '<div class="search-hint" style="color:var(--red)">Backend offline</div>'; }
-    }, 400);
-  });
-
-  document.addEventListener('click', e => { if (!e.target.closest('.search-wrap')) $('searchDrop').classList.remove('show'); });
-
-  function quickPick(key) {
-    mSelected = searchCache[key]; if (!mSelected) return;
-    $('searchDrop').classList.remove('show'); $('searchInput').value = '';
-    if (!isLoggedIn()) { openAuthModal(); return; }
-    $('mSearch').value = mSelected.name; $('mSelName').textContent = mSelected.name;
-    $('mSelRow').style.display = 'block'; $('mAddBtn').disabled = false;
-    $('modal').classList.add('show');
-  }
-
-  // ── AUTH ──
-  function openAuthModal() { $('auth-email').value = ''; $('auth-password').value = ''; $('auth-modal').classList.add('show'); setTimeout(() => $('auth-email').focus(), 80); }
-  function closeAuthModal() { $('auth-modal').classList.remove('show'); }
-  $('auth-modal').addEventListener('click', e => { if (e.target === $('auth-modal')) closeAuthModal(); });
-  function switchToRegister() { closeAuthModal(); openRegisterModal(); }
-
-  async function login() {
-    const email = $('auth-email').value.trim(), password = $('auth-password').value;
-    if (!email || !password) { toast('Podaj email i hasło', 'err'); return; }
-    try {
-      const res = await fetch(`${API}/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
-      if (!res.ok) { toast('Błędne dane logowania', 'err'); return; }
-      const data = await res.json();
-      if (data.token) { localStorage.setItem('token', data.token); localStorage.setItem('userEmail', email); }
-      toast('Zalogowano ✓', 'ok'); closeAuthModal(); updateAuthUI(); loadWatchlist();
-    } catch { toast('Błąd połączenia przy logowaniu', 'err'); }
-  }
-
-  function openRegisterModal() { $('reg-email').value = ''; $('reg-password').value = ''; $('reg-password2').value = ''; $('register-modal').classList.add('show'); setTimeout(() => $('reg-email').focus(), 80); }
-  function closeRegisterModal() { $('register-modal').classList.remove('show'); }
-  $('register-modal').addEventListener('click', e => { if (e.target === $('register-modal')) closeRegisterModal(); });
-
-  async function registerUser() {
-    const email = $('reg-email').value.trim(), pass1 = $('reg-password').value, pass2 = $('reg-password2').value;
-    if (!email || !pass1 || !pass2) { toast('Wypełnij wszystkie pola', 'err'); return; }
-    if (pass1 !== pass2) { toast('Hasła nie są takie same', 'err'); return; }
-    try {
-      const res = await fetch(`${API}/register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password: pass1 }) });
-      if (!res.ok) { const err = await res.json(); toast(err.error === 'email_exists' ? 'Ten email już istnieje' : 'Nie udało się utworzyć konta', 'err'); return; }
-      const data = await res.json();
-      if (data.token) { localStorage.setItem('token', data.token); localStorage.setItem('userEmail', email); }
-      toast('Konto utworzone i zalogowano ✓', 'ok'); closeRegisterModal(); updateAuthUI(); loadWatchlist();
-    } catch { toast('Błąd połączenia', 'err'); }
-  }
-
-  // ── STATUS ──
-  async function checkStatus() {
-    try {
-      const r = await fetch(API + '/health', { signal: AbortSignal.timeout(4000) });
-      if (r.ok) { $('sDot').className = 'dot'; $('sTxt').textContent = 'Backend online'; } else throw new Error();
-    } catch { $('sDot').className = 'dot off'; $('sTxt').textContent = 'Backend offline'; }
-  }
-
-  $('auth-password').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
-  $('auth-email').addEventListener('keydown', e => { if (e.key === 'Enter') $('auth-password').focus(); });
-  $('reg-password2').addEventListener('keydown', e => { if (e.key === 'Enter') registerUser(); });
-
-  // ── INIT ──
-  async function validateTokenAndInit() {
-    const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        const r = await fetch(API + '/watchlist', { headers: authHeaders() });
-        if (r.status === 401) { localStorage.removeItem('token'); localStorage.removeItem('userEmail'); }
-        else { items = await r.json(); $('cnt').textContent = items.length; renderSidebar(); }
-      } catch {}
-    }
-    updateAuthUI();
-  }
-
-  checkStatus();
-  validateTokenAndInit();
-  setInterval(checkStatus, 30000);
-  setInterval(loadWatchlist, 300000);
+checkStatus();
+init();
+setInterval(checkStatus, 30000);
+setInterval(loadWatchlist, 300000);
 </script>
 </body>
 </html>
