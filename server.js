@@ -435,8 +435,51 @@ app.delete('/api/purchases/:watchlistId/:purchaseId', auth, async (req, res) => 
 });
 
 // ───────────────── HISTORY ─────────────────
+// ───────────────── HISTORY (Steam pricehistory + fallback z bazy) ─────────────────
 app.get('/api/history/:id', auth, async (req, res) => {
   try {
+    // Pobierz market_hash dla tego watchlist item
+    const itemRes = await pool.query(
+      `SELECT i.market_hash FROM items i
+       JOIN watchlist w ON w.item_id = i.id
+       WHERE w.id = $1 AND w.user_id = $2`,
+      [req.params.id, req.userId]
+    );
+    if (!itemRes.rowCount) return res.status(404).json({ error: 'not_found' });
+
+    const marketHash = itemRes.rows[0].market_hash;
+
+    // Spróbuj pobrać historię bezpośrednio ze Steam (currency=6 = PLN)
+    try {
+      const url = `https://steamcommunity.com/market/pricehistory/?appid=730&currency=6&market_hash_name=${encodeURIComponent(marketHash)}`;
+      const headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'application/json',
+        'Referer': 'https://steamcommunity.com/market/'
+      };
+      // Użyj Steam cookie jeśli skonfigurowane
+      if (process.env.STEAM_COOKIE) {
+        headers['Cookie'] = `steamLoginSecure=${process.env.STEAM_COOKIE}`;
+      }
+      const response = await axios.get(url, { headers, timeout: 15000 });
+
+      if (response.data?.success && Array.isArray(response.data.prices) && response.data.prices.length > 0) {
+        // Steam zwraca: [["Apr 01 2025 01: +0", "12.34", "100"], ...]
+        const points = response.data.prices.map(p => {
+          // Usuń " +0" z końca i sparsuj datę
+          const dateStr = p[0].replace(/\s*:\s*\+\d+$/, '').trim();
+          const ts = new Date(dateStr).getTime();
+          const price = normalizeSteamPrice(String(p[1]));
+          return { ts, lowest: price, median: price };
+        }).filter(p => !isNaN(p.ts) && p.lowest != null);
+
+        if (points.length > 0) return res.json(points);
+      }
+    } catch (steamErr) {
+      console.warn(`Steam pricehistory failed for "${marketHash}":`, steamErr.message);
+    }
+
+    // Fallback: nasza baza (zbierana co 1h przez cron)
     const result = await pool.query(
       `SELECT
          EXTRACT(EPOCH FROM p.fetched_at) * 1000 AS ts,
@@ -541,8 +584,8 @@ app.get('/api/search', async (req, res) => {
   }
 });
 
-// ───────────────── AUTO REFRESH (co godzinę) ─────────────────
-cron.schedule('0 * * * *', async () => {
+// ───────────────── AUTO REFRESH (co 15 minut — gęstsza historia) ─────────────────
+cron.schedule('*/15 * * * *', async () => {
   console.log('[cron] Auto-refresh start');
   try {
     const result = await pool.query('SELECT id, market_hash FROM items');
