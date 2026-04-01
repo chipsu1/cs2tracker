@@ -1,20 +1,19 @@
 // ─────────────────────────────────────────────────────────────
-//  CS2 TRACKER — BACKEND Z POSTGRESQL + LOGOWANIEM + WATCHLISTĄ
+//  CS2 TRACKER — ZOPTYMALIZOWANY (min. zapytania do DB)
 // ─────────────────────────────────────────────────────────────
 
 const express = require('express');
-const cors = require('cors');
-const axios = require('axios');
-const path = require('path');
-const cron = require('node-cron');
-const { Pool } = require('pg');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
+const cors    = require('cors');
+const axios   = require('axios');
+const path    = require('path');
+const cron    = require('node-cron');
+const { Pool }= require('pg');
+const bcrypt  = require('bcrypt');
+const jwt     = require('jsonwebtoken');
 
-const app = express();
+const app  = express();
 const PORT = process.env.PORT || 3001;
 
-// ───────────────── PostgreSQL ─────────────────
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
@@ -22,7 +21,6 @@ const pool = new Pool({
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_change_me';
 
-// ───────────────── Express ─────────────────
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -36,15 +34,18 @@ async function initDb() {
       password_hash TEXT NOT NULL,
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
-
     CREATE TABLE IF NOT EXISTS items (
       id SERIAL PRIMARY KEY,
       market_hash TEXT UNIQUE NOT NULL,
       name TEXT NOT NULL,
       image_url TEXT,
+      -- Cache aktualnej ceny (odświeżany raz dziennie przez cron)
+      cached_price NUMERIC(10,2),
+      cached_median NUMERIC(10,2),
+      cached_volume INTEGER,
+      cache_updated_at TIMESTAMPTZ,
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
-
     CREATE TABLE IF NOT EXISTS watchlist (
       id SERIAL PRIMARY KEY,
       user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
@@ -52,7 +53,6 @@ async function initDb() {
       created_at TIMESTAMPTZ DEFAULT NOW(),
       UNIQUE(user_id, item_id)
     );
-
     CREATE TABLE IF NOT EXISTS purchases (
       id SERIAL PRIMARY KEY,
       watchlist_id INTEGER REFERENCES watchlist(id) ON DELETE CASCADE,
@@ -61,395 +61,315 @@ async function initDb() {
       bought_at TIMESTAMPTZ DEFAULT NOW(),
       note TEXT
     );
-
-    CREATE TABLE IF NOT EXISTS prices (
-      id SERIAL PRIMARY KEY,
-      item_id INTEGER REFERENCES items(id) ON DELETE CASCADE,
-      lowest_price NUMERIC(10,2),
-      median_price NUMERIC(10,2),
-      volume INTEGER,
-      fetched_at TIMESTAMPTZ DEFAULT NOW()
-    );
   `);
 
-  // Migracja: jeśli stara kolumna buy_price istnieje w watchlist, przenieś dane
+  // Migracja: przenieś dane z tabeli prices → items.cached_price jeśli istnieje
   try {
-    const col = await pool.query(`
-      SELECT column_name FROM information_schema.columns
-      WHERE table_name='watchlist' AND column_name='buy_price'
-    `);
-    if (col.rowCount > 0) {
+    const hasPrices = await pool.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables WHERE table_name = 'prices'
+      ) AS exists`);
+    if (hasPrices.rows[0].exists) {
       await pool.query(`
-        INSERT INTO purchases (watchlist_id, quantity, buy_price)
-        SELECT id, 1, buy_price FROM watchlist
-        WHERE buy_price IS NOT NULL
-        ON CONFLICT DO NOTHING;
-        ALTER TABLE watchlist DROP COLUMN IF EXISTS buy_price;
+        UPDATE items i SET
+          cached_price = p.lowest_price,
+          cached_median = p.median_price,
+          cached_volume = p.volume,
+          cache_updated_at = p.fetched_at
+        FROM (
+          SELECT DISTINCT ON (item_id) item_id, lowest_price, median_price, volume, fetched_at
+          FROM prices ORDER BY item_id, fetched_at DESC
+        ) p WHERE p.item_id = i.id AND i.cached_price IS NULL;
       `);
-      console.log('Migracja buy_price OK');
+      await pool.query(`DROP TABLE IF EXISTS prices CASCADE`);
+      console.log('Migracja prices → items.cached_price OK, tabela prices usunięta');
     }
-  } catch (e) {
-    console.warn('Migracja pominięta:', e.message);
-  }
+  } catch(e) { console.warn('Migracja:', e.message); }
+
+  // Migracja: usuń starą kolumnę buy_price z watchlist jeśli istnieje
+  try {
+    await pool.query(`ALTER TABLE watchlist DROP COLUMN IF EXISTS buy_price`);
+  } catch(e) {}
+
+  // Migracja: dodaj kolumny cache do items jeśli brakuje
+  try {
+    await pool.query(`
+      ALTER TABLE items
+        ADD COLUMN IF NOT EXISTS cached_price NUMERIC(10,2),
+        ADD COLUMN IF NOT EXISTS cached_median NUMERIC(10,2),
+        ADD COLUMN IF NOT EXISTS cached_volume INTEGER,
+        ADD COLUMN IF NOT EXISTS cache_updated_at TIMESTAMPTZ
+    `);
+  } catch(e) {}
 
   console.log('DB schema OK');
 }
 
-// ───────────────── JWT middleware ─────────────────
+// ───────────────── JWT ─────────────────
 function createToken(userId) {
   return jwt.sign({ userId }, JWT_SECRET, { expiresIn: '7d' });
 }
-
 function auth(req, res, next) {
   const h = req.headers.authorization || '';
   const token = h.startsWith('Bearer ') ? h.slice(7) : null;
   if (!token) return res.status(401).json({ error: 'unauthorized' });
   try {
-    const payload = jwt.verify(token, JWT_SECRET);
-    req.userId = payload.userId;
+    req.userId = jwt.verify(token, JWT_SECRET).userId;
     next();
-  } catch {
-    return res.status(401).json({ error: 'invalid_token' });
-  }
+  } catch { return res.status(401).json({ error: 'invalid_token' }); }
 }
 
-// ───────────────── Helpers ─────────────────
+// ───────────────── Steam helpers ─────────────────
 function normalizeSteamPrice(str) {
   if (!str) return null;
-  let cleaned = str.replace(/[^\d.,]/g, '');
-  const lastComma = cleaned.lastIndexOf(',');
-  const lastDot = cleaned.lastIndexOf('.');
-  if (lastComma > lastDot) {
-    cleaned = cleaned.replace(/\./g, '').replace(',', '.');
-  } else if (lastDot > lastComma) {
-    cleaned = cleaned.replace(/,/g, '');
-  }
-  const val = parseFloat(cleaned);
-  return isNaN(val) ? null : val;
+  let c = str.replace(/[^\d.,]/g, '');
+  const lastComma = c.lastIndexOf(','), lastDot = c.lastIndexOf('.');
+  if (lastComma > lastDot) c = c.replace(/\./g, '').replace(',', '.');
+  else if (lastDot > lastComma) c = c.replace(/,/g, '');
+  const v = parseFloat(c);
+  return isNaN(v) ? null : v;
 }
 
-async function fetchSteamPrice(itemName) {
-  const encoded = encodeURIComponent(itemName);
-  const url = `https://steamcommunity.com/market/priceoverview/?appid=730&currency=6&market_hash_name=${encoded}`;
+async function fetchSteamPrice(marketHash) {
+  const url = `https://steamcommunity.com/market/priceoverview/?appid=730&currency=6&market_hash_name=${encodeURIComponent(marketHash)}`;
   try {
-    const response = await axios.get(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0',
-        'Accept': 'application/json',
-        'Referer': 'https://steamcommunity.com/market/'
-      },
+    const r = await axios.get(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json', 'Referer': 'https://steamcommunity.com/market/' },
       timeout: 12000
     });
-    const d = response.data;
-    if (!d.success) return null;
+    if (!r.data?.success) return null;
     return {
-      lowest_price: normalizeSteamPrice(d.lowest_price),
-      median_price: normalizeSteamPrice(d.median_price),
-      volume: parseInt((d.volume || '0').replace(/[^\d]/g, '')) || 0
+      lowest_price: normalizeSteamPrice(r.data.lowest_price),
+      median_price: normalizeSteamPrice(r.data.median_price),
+      volume: parseInt((r.data.volume || '0').replace(/[^\d]/g, '')) || 0
     };
-  } catch (e) {
-    console.error(`Steam error for "${itemName}":`, e.message);
+  } catch(e) {
+    console.error(`Steam price error "${marketHash}":`, e.message);
     return null;
   }
 }
 
-// Buduje pełny obiekt watchlist item z cenami i zakupami
-async function getWatchlistItem(watchlistId, userId) {
-  const result = await pool.query(
-    `SELECT
-       w.id,
-       i.name,
-       i.market_hash,
-       i.image_url AS "imageUrl",
-       p.lowest_price AS "currentPrice",
-       p.median_price AS "currentMedian",
-       p.volume AS "currentVolume",
-       EXTRACT(EPOCH FROM p.fetched_at) * 1000 AS "lastUpdated"
-     FROM watchlist w
-     JOIN items i ON i.id = w.item_id
-     LEFT JOIN prices p ON p.item_id = w.item_id
-       AND p.fetched_at = (SELECT MAX(fetched_at) FROM prices WHERE item_id = w.item_id)
-     WHERE w.id = $1 AND w.user_id = $2`,
-    [watchlistId, userId]
+// Zapisz świeżą cenę do cache w DB
+async function updatePriceCache(itemId, price) {
+  await pool.query(
+    `UPDATE items SET cached_price=$1, cached_median=$2, cached_volume=$3, cache_updated_at=NOW() WHERE id=$4`,
+    [price.lowest_price, price.median_price, price.volume, itemId]
   );
-  if (!result.rowCount) return null;
+}
 
-  const item = result.rows[0];
-  const purch = await pool.query(
-    `SELECT id, quantity, buy_price AS "buyPrice",
-            bought_at AS "boughtAt", note
-     FROM purchases WHERE watchlist_id = $1
-     ORDER BY bought_at ASC`,
+// Pobierz zakupy i oblicz statystyki dla jednego watchlist row
+async function getPurchaseStats(watchlistId) {
+  const r = await pool.query(
+    `SELECT id, quantity, buy_price AS "buyPrice", bought_at AS "boughtAt", note
+     FROM purchases WHERE watchlist_id=$1 ORDER BY bought_at ASC`,
     [watchlistId]
   );
-
-  const purchases = purch.rows;
-  const totalQty = purchases.reduce((s, p) => s + Number(p.quantity), 0);
+  const purchases = r.rows;
+  const totalQty   = purchases.reduce((s, p) => s + Number(p.quantity), 0);
   const totalSpent = purchases.reduce((s, p) => s + Number(p.quantity) * parseFloat(p.buyPrice), 0);
   const avgBuyPrice = totalQty > 0 ? totalSpent / totalQty : null;
-  const currentPrice = item.currentPrice ? parseFloat(item.currentPrice) : null;
-
-  return {
-    ...item,
-    purchases,
-    totalQty,
-    totalSpent: totalQty > 0 ? totalSpent : null,
-    avgBuyPrice,
-    totalValue: currentPrice && totalQty > 0 ? currentPrice * totalQty : null,
-    totalPnl: currentPrice && totalQty > 0 ? (currentPrice * totalQty) - totalSpent : null,
-    pnlPct: avgBuyPrice && currentPrice ? ((currentPrice - avgBuyPrice) / avgBuyPrice) * 100 : null
-  };
+  return { purchases, totalQty, totalSpent: totalQty > 0 ? totalSpent : null, avgBuyPrice };
 }
 
-// Pomocnik do agregacji zakupów (dla GET /api/watchlist)
-async function enrichWithPurchases(row) {
-  const purch = await pool.query(
-    `SELECT id, quantity, buy_price AS "buyPrice", bought_at AS "boughtAt", note
-     FROM purchases WHERE watchlist_id = $1 ORDER BY bought_at ASC`,
-    [row.id]
-  );
-  const purchases = purch.rows;
-  const totalQty = purchases.reduce((s, p) => s + Number(p.quantity), 0);
-  const totalSpent = purchases.reduce((s, p) => s + Number(p.quantity) * parseFloat(p.buyPrice), 0);
-  const avgBuyPrice = totalQty > 0 ? totalSpent / totalQty : null;
-  const currentPrice = row.currentPrice ? parseFloat(row.currentPrice) : null;
+// Buduje pełny obiekt item
+function calcPnl(row, stats) {
+  const cp = row.currentPrice ? parseFloat(row.currentPrice) : null;
+  const { purchases, totalQty, totalSpent, avgBuyPrice } = stats;
   return {
     ...row,
-    purchases,  // ← tablica zakupów do wyświetlenia w tabeli
+    purchases,
     totalQty,
-    totalSpent: totalQty > 0 ? totalSpent : null,
+    totalSpent,
     avgBuyPrice,
-    totalValue: currentPrice && totalQty > 0 ? currentPrice * totalQty : null,
-    totalPnl: currentPrice && totalQty > 0 ? (currentPrice * totalQty) - totalSpent : null,
-    pnlPct: avgBuyPrice && currentPrice ? ((currentPrice - avgBuyPrice) / avgBuyPrice) * 100 : null
+    totalValue: cp && totalQty > 0 ? cp * totalQty : null,
+    totalPnl:   cp && totalQty > 0 ? (cp * totalQty) - totalSpent : null,
+    pnlPct:     avgBuyPrice && cp ? ((cp - avgBuyPrice) / avgBuyPrice) * 100 : null
   };
 }
 
-// ───────────────── AUTH: rejestracja ─────────────────
+// ───────────────── AUTH ─────────────────
 app.post('/api/register', async (req, res) => {
   try {
     const { email, password } = req.body;
-    if (!email || !password)
-      return res.status(400).json({ error: 'missing_fields' });
+    if (!email || !password) return res.status(400).json({ error: 'missing_fields' });
     const hash = await bcrypt.hash(password, 10);
-    const result = await pool.query(
-      'INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id',
+    const r = await pool.query(
+      'INSERT INTO users (email, password_hash) VALUES ($1,$2) RETURNING id',
       [email, hash]
     );
-    res.json({ token: createToken(result.rows[0].id) });
-  } catch (e) {
+    res.json({ token: createToken(r.rows[0].id) });
+  } catch(e) {
     if (e.code === '23505') return res.status(400).json({ error: 'email_exists' });
-    console.error(e);
-    res.status(500).json({ error: 'server_error' });
+    console.error(e); res.status(500).json({ error: 'server_error' });
   }
 });
 
-// ───────────────── AUTH: logowanie ─────────────────
 app.post('/api/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    const result = await pool.query(
-      'SELECT id, password_hash FROM users WHERE email = $1', [email]
-    );
-    if (!result.rowCount) return res.status(400).json({ error: 'invalid_credentials' });
-    const ok = await bcrypt.compare(password, result.rows[0].password_hash);
-    if (!ok) return res.status(400).json({ error: 'invalid_credentials' });
-    res.json({ token: createToken(result.rows[0].id) });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: 'server_error' });
-  }
+    const r = await pool.query('SELECT id, password_hash FROM users WHERE email=$1', [email]);
+    if (!r.rowCount) return res.status(400).json({ error: 'invalid_credentials' });
+    if (!await bcrypt.compare(password, r.rows[0].password_hash))
+      return res.status(400).json({ error: 'invalid_credentials' });
+    res.json({ token: createToken(r.rows[0].id) });
+  } catch(e) { console.error(e); res.status(500).json({ error: 'server_error' }); }
 });
 
-// ───────────────── WATCHLIST: pobieranie ─────────────────
+// ───────────────── WATCHLIST ─────────────────
 app.get('/api/watchlist', auth, async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT
-         w.id,
-         i.name,
-         i.market_hash,
-         i.image_url AS "imageUrl",
-         p.lowest_price AS "currentPrice",
-         p.median_price AS "currentMedian",
-         p.volume AS "currentVolume",
-         EXTRACT(EPOCH FROM p.fetched_at) * 1000 AS "lastUpdated"
+      `SELECT w.id, i.id AS item_id, i.name, i.market_hash, i.image_url AS "imageUrl",
+              i.cached_price AS "currentPrice", i.cached_median AS "currentMedian",
+              i.cached_volume AS "currentVolume",
+              EXTRACT(EPOCH FROM i.cache_updated_at)*1000 AS "lastUpdated"
        FROM watchlist w
        JOIN items i ON i.id = w.item_id
-       LEFT JOIN prices p ON p.item_id = w.item_id
-         AND p.fetched_at = (SELECT MAX(fetched_at) FROM prices WHERE item_id = w.item_id)
-       WHERE w.user_id = $1
+       WHERE w.user_id=$1
        ORDER BY w.created_at DESC`,
       [req.userId]
     );
 
-    // Dla itemów bez ceny — pobierz w tle (nie blokuj odpowiedzi)
-    result.rows.forEach(row => {
-      if (!row.currentPrice) {
-        fetchSteamPrice(row.market_hash).then(price => {
-          if (price) {
-            pool.query(
-              `INSERT INTO prices (item_id, lowest_price, median_price, volume, fetched_at)
-               SELECT i.id, $2, $3, $4, NOW() FROM items i WHERE i.market_hash = $1`,
-              [row.market_hash, price.lowest_price, price.median_price, price.volume]
-            ).catch(e => console.error('bg price insert error:', e.message));
-          }
-        }).catch(() => {});
-      }
+    // Dla itemów bez ceny — odśwież w tle (nie blokuje odpowiedzi)
+    result.rows.filter(r => !r.currentPrice).forEach(row => {
+      fetchSteamPrice(row.market_hash).then(price => {
+        if (price) updatePriceCache(row.item_id, price).catch(() => {});
+      }).catch(() => {});
     });
 
-    const rows = await Promise.all(result.rows.map(enrichWithPurchases));
+    const rows = await Promise.all(result.rows.map(async row => {
+      const stats = await getPurchaseStats(row.id);
+      return calcPnl(row, stats);
+    }));
+
     res.json(rows);
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: 'server_error' });
-  }
+  } catch(e) { console.error(e); res.status(500).json({ error: 'server_error' }); }
 });
 
-// ───────────────── WATCHLIST: dodawanie ─────────────────
 app.post('/api/watchlist', auth, async (req, res) => {
   try {
     const { marketHashName, name, imageUrl } = req.body;
-    if (!marketHashName || !name)
-      return res.status(400).json({ error: 'missing_fields' });
+    if (!marketHashName || !name) return res.status(400).json({ error: 'missing_fields' });
 
     const itemRes = await pool.query(
       `INSERT INTO items (market_hash, name, image_url)
-       VALUES ($1, $2, $3)
-       ON CONFLICT (market_hash)
-       DO UPDATE SET name = EXCLUDED.name, image_url = EXCLUDED.image_url
+       VALUES ($1,$2,$3)
+       ON CONFLICT (market_hash) DO UPDATE SET name=EXCLUDED.name, image_url=EXCLUDED.image_url
        RETURNING id`,
       [marketHashName, name, imageUrl || null]
     );
     const itemId = itemRes.rows[0].id;
 
     const existing = await pool.query(
-      'SELECT id FROM watchlist WHERE user_id = $1 AND item_id = $2',
-      [req.userId, itemId]
+      'SELECT id FROM watchlist WHERE user_id=$1 AND item_id=$2', [req.userId, itemId]
     );
     if (existing.rowCount > 0) return res.status(409).json({ error: 'already_exists' });
 
     const wRes = await pool.query(
-      `INSERT INTO watchlist (user_id, item_id) VALUES ($1, $2) RETURNING id`,
+      'INSERT INTO watchlist (user_id, item_id) VALUES ($1,$2) RETURNING id',
       [req.userId, itemId]
     );
     const watchlistId = wRes.rows[0].id;
 
+    // Pobierz cenę i zapisz do cache
     const price = await fetchSteamPrice(marketHashName);
-    if (price) {
-      await pool.query(
-        `INSERT INTO prices (item_id, lowest_price, median_price, volume, fetched_at)
-         VALUES ($1, $2, $3, $4, NOW())`,
-        [itemId, price.lowest_price, price.median_price, price.volume]
-      );
-    }
+    if (price) await updatePriceCache(itemId, price);
 
-    const item = await getWatchlistItem(watchlistId, req.userId);
-    res.json(item || { id: watchlistId, name });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: 'server_error' });
-  }
+    const row = await pool.query(
+      `SELECT w.id, i.id AS item_id, i.name, i.market_hash, i.image_url AS "imageUrl",
+              i.cached_price AS "currentPrice", i.cached_median AS "currentMedian",
+              i.cached_volume AS "currentVolume",
+              EXTRACT(EPOCH FROM i.cache_updated_at)*1000 AS "lastUpdated"
+       FROM watchlist w JOIN items i ON i.id=w.item_id WHERE w.id=$1`,
+      [watchlistId]
+    );
+    const stats = await getPurchaseStats(watchlistId);
+    res.json(calcPnl(row.rows[0], stats));
+  } catch(e) { console.error(e); res.status(500).json({ error: 'server_error' }); }
 });
 
-// ───────────────── WATCHLIST: usuwanie ─────────────────
 app.delete('/api/watchlist/:id', auth, async (req, res) => {
   try {
-    await pool.query('DELETE FROM watchlist WHERE id = $1 AND user_id = $2',
-      [req.params.id, req.userId]);
+    await pool.query('DELETE FROM watchlist WHERE id=$1 AND user_id=$2', [req.params.id, req.userId]);
     res.json({ ok: true });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: 'server_error' });
-  }
+  } catch(e) { console.error(e); res.status(500).json({ error: 'server_error' }); }
 });
 
-// ───────────────── PURCHASES: pobieranie ─────────────────
+// ───────────────── PURCHASES ─────────────────
+async function getFullItem(watchlistId, userId) {
+  const r = await pool.query(
+    `SELECT w.id, i.id AS item_id, i.name, i.market_hash, i.image_url AS "imageUrl",
+            i.cached_price AS "currentPrice", i.cached_median AS "currentMedian",
+            i.cached_volume AS "currentVolume",
+            EXTRACT(EPOCH FROM i.cache_updated_at)*1000 AS "lastUpdated"
+     FROM watchlist w JOIN items i ON i.id=w.item_id
+     WHERE w.id=$1 AND w.user_id=$2`,
+    [watchlistId, userId]
+  );
+  if (!r.rowCount) return null;
+  const stats = await getPurchaseStats(watchlistId);
+  return calcPnl(r.rows[0], stats);
+}
+
 app.get('/api/purchases/:watchlistId', auth, async (req, res) => {
   try {
     const check = await pool.query(
-      'SELECT id FROM watchlist WHERE id = $1 AND user_id = $2',
-      [req.params.watchlistId, req.userId]
+      'SELECT id FROM watchlist WHERE id=$1 AND user_id=$2', [req.params.watchlistId, req.userId]
     );
     if (!check.rowCount) return res.status(404).json({ error: 'not_found' });
-
-    const result = await pool.query(
+    const r = await pool.query(
       `SELECT id, quantity, buy_price AS "buyPrice", bought_at AS "boughtAt", note
-       FROM purchases WHERE watchlist_id = $1 ORDER BY bought_at ASC`,
+       FROM purchases WHERE watchlist_id=$1 ORDER BY bought_at ASC`,
       [req.params.watchlistId]
     );
-    res.json(result.rows);
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: 'server_error' });
-  }
+    res.json(r.rows);
+  } catch(e) { console.error(e); res.status(500).json({ error: 'server_error' }); }
 });
 
-// ───────────────── PURCHASES: dodawanie ─────────────────
 app.post('/api/purchases/:watchlistId', auth, async (req, res) => {
   try {
     const { quantity, buyPrice, note } = req.body;
     if (!quantity || !buyPrice || quantity < 1 || buyPrice <= 0)
       return res.status(400).json({ error: 'invalid_data' });
-
     const check = await pool.query(
-      'SELECT id FROM watchlist WHERE id = $1 AND user_id = $2',
-      [req.params.watchlistId, req.userId]
+      'SELECT id FROM watchlist WHERE id=$1 AND user_id=$2', [req.params.watchlistId, req.userId]
     );
     if (!check.rowCount) return res.status(404).json({ error: 'not_found' });
-
     await pool.query(
-      `INSERT INTO purchases (watchlist_id, quantity, buy_price, note)
-       VALUES ($1, $2, $3, $4)`,
+      'INSERT INTO purchases (watchlist_id, quantity, buy_price, note) VALUES ($1,$2,$3,$4)',
       [req.params.watchlistId, quantity, buyPrice, note || null]
     );
-
-    const item = await getWatchlistItem(req.params.watchlistId, req.userId);
-    res.json(item);
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: 'server_error' });
-  }
+    res.json(await getFullItem(req.params.watchlistId, req.userId));
+  } catch(e) { console.error(e); res.status(500).json({ error: 'server_error' }); }
 });
 
-// ───────────────── PURCHASES: usuwanie ─────────────────
 app.delete('/api/purchases/:watchlistId/:purchaseId', auth, async (req, res) => {
   try {
     const check = await pool.query(
-      'SELECT id FROM watchlist WHERE id = $1 AND user_id = $2',
-      [req.params.watchlistId, req.userId]
+      'SELECT id FROM watchlist WHERE id=$1 AND user_id=$2', [req.params.watchlistId, req.userId]
     );
     if (!check.rowCount) return res.status(404).json({ error: 'not_found' });
-
     await pool.query(
-      'DELETE FROM purchases WHERE id = $1 AND watchlist_id = $2',
+      'DELETE FROM purchases WHERE id=$1 AND watchlist_id=$2',
       [req.params.purchaseId, req.params.watchlistId]
     );
-
-    const item = await getWatchlistItem(req.params.watchlistId, req.userId);
-    res.json(item);
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: 'server_error' });
-  }
+    res.json(await getFullItem(req.params.watchlistId, req.userId));
+  } catch(e) { console.error(e); res.status(500).json({ error: 'server_error' }); }
 });
 
-// ───────────────── HISTORY ─────────────────
-// ───────────────── HISTORY (Steam pricehistory + fallback z bazy) ─────────────────
+// ───────────────── HISTORIA (Steam pricehistory + fallback) ─────────────────
 app.get('/api/history/:id', auth, async (req, res) => {
   try {
-    // Pobierz market_hash dla tego watchlist item
-    const itemRes = await pool.query(
+    const r = await pool.query(
       `SELECT i.market_hash FROM items i
-       JOIN watchlist w ON w.item_id = i.id
-       WHERE w.id = $1 AND w.user_id = $2`,
+       JOIN watchlist w ON w.item_id=i.id
+       WHERE w.id=$1 AND w.user_id=$2`,
       [req.params.id, req.userId]
     );
-    if (!itemRes.rowCount) return res.status(404).json({ error: 'not_found' });
+    if (!r.rowCount) return res.status(404).json({ error: 'not_found' });
+    const marketHash = r.rows[0].market_hash;
 
-    const marketHash = itemRes.rows[0].market_hash;
-
-    // Spróbuj pobrać historię bezpośrednio ze Steam (currency=6 = PLN)
+    // Steam pricehistory (wymaga STEAM_COOKIE)
     try {
       const url = `https://steamcommunity.com/market/pricehistory/?appid=730&currency=6&market_hash_name=${encodeURIComponent(marketHash)}`;
       const headers = {
@@ -457,101 +377,62 @@ app.get('/api/history/:id', auth, async (req, res) => {
         'Accept': 'application/json',
         'Referer': 'https://steamcommunity.com/market/'
       };
-      // Użyj Steam cookie jeśli skonfigurowane
-      if (process.env.STEAM_COOKIE) {
-        headers['Cookie'] = `steamLoginSecure=${process.env.STEAM_COOKIE}`;
-      }
-      const response = await axios.get(url, { headers, timeout: 15000 });
+      if (process.env.STEAM_COOKIE) headers['Cookie'] = `steamLoginSecure=${process.env.STEAM_COOKIE}`;
 
+      const response = await axios.get(url, { headers, timeout: 15000 });
       if (response.data?.success && Array.isArray(response.data.prices) && response.data.prices.length > 0) {
-        // Steam zwraca: [["Apr 01 2025 01: +0", "12.34", "100"], ...]
         const points = response.data.prices.map(p => {
-          // Usuń " +0" z końca i sparsuj datę
           const dateStr = p[0].replace(/\s*:\s*\+\d+$/, '').trim();
           const ts = new Date(dateStr).getTime();
           const price = normalizeSteamPrice(String(p[1]));
           return { ts, lowest: price, median: price };
         }).filter(p => !isNaN(p.ts) && p.lowest != null);
-
         if (points.length > 0) return res.json(points);
       }
-    } catch (steamErr) {
-      console.warn(`Steam pricehistory failed for "${marketHash}":`, steamErr.message);
-    }
+    } catch(e) { console.warn('Steam pricehistory failed:', e.message); }
 
-    // Fallback: nasza baza (zbierana co 1h przez cron)
-    const result = await pool.query(
-      `SELECT
-         EXTRACT(EPOCH FROM p.fetched_at) * 1000 AS ts,
-         p.lowest_price AS lowest,
-         p.median_price AS median
-       FROM prices p
-       JOIN watchlist w ON w.item_id = p.item_id
-       WHERE w.id = $1 AND w.user_id = $2
-       ORDER BY p.fetched_at ASC`,
-      [req.params.id, req.userId]
-    );
-    res.json(result.rows);
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: 'server_error' });
-  }
+    // Fallback: brak danych
+    res.json([]);
+  } catch(e) { console.error(e); res.status(500).json({ error: 'server_error' }); }
 });
 
-// ───────────────── REFRESH: pojedynczy item ─────────────────
+// ───────────────── REFRESH: ręczny (pobiera świeżą cenę ze Steam) ─────────────────
 app.post('/api/refresh/:id', auth, async (req, res) => {
   try {
-    const itemRes = await pool.query(
+    const r = await pool.query(
       `SELECT i.id, i.market_hash FROM items i
-       JOIN watchlist w ON w.item_id = i.id
-       WHERE w.id = $1 AND w.user_id = $2`,
+       JOIN watchlist w ON w.item_id=i.id
+       WHERE w.id=$1 AND w.user_id=$2`,
       [req.params.id, req.userId]
     );
-    if (!itemRes.rowCount) return res.status(404).json({ error: 'not_found' });
+    if (!r.rowCount) return res.status(404).json({ error: 'not_found' });
+    const { id: itemId, market_hash } = r.rows[0];
 
-    const { id: itemId, market_hash } = itemRes.rows[0];
     const price = await fetchSteamPrice(market_hash);
     if (!price) return res.status(502).json({ error: 'steam_error' });
+    await updatePriceCache(itemId, price);
 
-    await pool.query(
-      `INSERT INTO prices (item_id, lowest_price, median_price, volume, fetched_at)
-       VALUES ($1, $2, $3, $4, NOW())`,
-      [itemId, price.lowest_price, price.median_price, price.volume]
-    );
-
-    const item = await getWatchlistItem(req.params.id, req.userId);
-    res.json(item);
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: 'server_error' });
-  }
+    res.json(await getFullItem(req.params.id, req.userId));
+  } catch(e) { console.error(e); res.status(500).json({ error: 'server_error' }); }
 });
 
-// ───────────────── REFRESH: wszystkie itemy ─────────────────
+// ───────────────── REFRESH ALL ─────────────────
 app.post('/api/refresh-all', auth, async (req, res) => {
   res.json({ ok: true });
   try {
     const result = await pool.query(
       `SELECT i.id, i.market_hash FROM items i
-       JOIN watchlist w ON w.item_id = i.id
-       WHERE w.user_id = $1`,
+       JOIN watchlist w ON w.item_id=i.id
+       WHERE w.user_id=$1`,
       [req.userId]
     );
     for (const item of result.rows) {
       await new Promise(r => setTimeout(r, 3000));
       const price = await fetchSteamPrice(item.market_hash);
-      if (price) {
-        await pool.query(
-          `INSERT INTO prices (item_id, lowest_price, median_price, volume, fetched_at)
-           VALUES ($1, $2, $3, $4, NOW())`,
-          [item.id, price.lowest_price, price.median_price, price.volume]
-        );
-      }
+      if (price) await updatePriceCache(item.id, price);
     }
     console.log(`refresh-all done for user ${req.userId}`);
-  } catch (e) {
-    console.error('refresh-all error:', e.message);
-  }
+  } catch(e) { console.error('refresh-all error:', e.message); }
 });
 
 // ───────────────── SEARCH ─────────────────
@@ -567,8 +448,7 @@ app.get('/api/search', async (req, res) => {
     if (!response.data?.results) return res.json([]);
 
     const raw = response.data.results.slice(0, 10);
-    const pricePromises = raw.slice(0, 6).map(i => fetchSteamPrice(i.hash_name).catch(() => null));
-    const prices = await Promise.all(pricePromises);
+    const prices = await Promise.all(raw.slice(0, 6).map(i => fetchSteamPrice(i.hash_name).catch(() => null)));
 
     res.json(raw.map((i, idx) => ({
       name: i.name,
@@ -578,49 +458,34 @@ app.get('/api/search', async (req, res) => {
         ? `https://community.cloudflare.steamstatic.com/economy/image/${i.asset_description.icon_url}/96fx96f`
         : null
     })));
-  } catch (e) {
-    console.error('Steam search error:', e.message);
-    res.status(502).json({ error: 'steam_search_failed' });
-  }
+  } catch(e) { console.error('Steam search error:', e.message); res.status(502).json({ error: 'steam_search_failed' }); }
 });
 
-// ───────────────── AUTO REFRESH (co 15 minut — gęstsza historia) ─────────────────
-cron.schedule('*/15 * * * *', async () => {
-  console.log('[cron] Auto-refresh start');
+// ───────────────── CRON: raz dziennie o 6:00 ─────────────────
+cron.schedule('0 6 * * *', async () => {
+  console.log('[cron] Daily price update start');
   try {
     const result = await pool.query('SELECT id, market_hash FROM items');
     for (const item of result.rows) {
-      await new Promise(r => setTimeout(r, 3000));
+      await new Promise(r => setTimeout(r, 3500)); // respektuj Steam rate limit
       const price = await fetchSteamPrice(item.market_hash);
-      if (price) {
-        await pool.query(
-          `INSERT INTO prices (item_id, lowest_price, median_price, volume, fetched_at)
-           VALUES ($1, $2, $3, $4, NOW())`,
-          [item.id, price.lowest_price, price.median_price, price.volume]
-        );
-      }
+      if (price) await updatePriceCache(item.id, price);
     }
-    console.log('[cron] Auto-refresh done');
-  } catch (e) {
-    console.error('[cron] error:', e.message);
-  }
+    console.log(`[cron] Done — ${result.rows.length} items updated`);
+  } catch(e) { console.error('[cron] error:', e.message); }
 });
 
-// ───────────────── HEALTH / DB TEST ─────────────────
+// ───────────────── HEALTH ─────────────────
 app.get('/api/health', (req, res) => res.json({ ok: true, time: new Date().toISOString() }));
 app.get('/api/db-test', async (req, res) => {
   try {
-    const result = await pool.query('SELECT NOW()');
-    res.json({ ok: true, time: result.rows[0].now });
-  } catch (e) {
-    res.status(500).json({ ok: false, error: e.message });
-  }
+    const r = await pool.query('SELECT NOW()');
+    res.json({ ok: true, time: r.rows[0].now });
+  } catch(e) { res.status(500).json({ ok: false, error: e.message }); }
 });
 
-// ───────────────── SPA fallback ─────────────────
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
-// ───────────────── START ─────────────────
 initDb()
   .then(() => app.listen(PORT, () => console.log(`CS2 Tracker running on port ${PORT}`)))
   .catch(e => { console.error('DB init failed:', e.message); process.exit(1); });
