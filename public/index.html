@@ -8,11 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;700&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
   <style>
-    *, *::before, *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
       --bg: #080c14;
       --surface: #0f1623;
@@ -31,1769 +27,1145 @@
       --sans: 'Barlow', sans-serif;
       --cond: 'Barlow Condensed', sans-serif;
     }
-    html, body {
-      height: 100%;
-      overflow: hidden;
-    }
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--sans);
-      font-size: 14px;
-    }
-    .layout {
-      display: grid;
-      grid-template-rows: 52px 1fr;
-      height: 100vh;
-    }
+    html, body { height: 100%; overflow: hidden; }
+    body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; }
+
+    /* ── LAYOUT ── */
+    .layout { display: grid; grid-template-rows: 52px 1fr; height: 100vh; }
+    .body { display: grid; grid-template-columns: 285px 1fr; height: 100%; overflow: hidden; }
+
+    /* ── TOPBAR ── */
     .topbar {
       background: var(--surface);
       border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 0 18px;
-      z-index: 10;
-    }
-    .body {
-      display: grid;
-      grid-template-columns: 285px 1fr;
-      height: 100%;
-      overflow: hidden;
-    }
-    .sidebar {
-      background: var(--surface);
-      border-right: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-    .main {
-      overflow-y: auto;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-    .main::-webkit-scrollbar {
-      width: 4px;
-    }
-    .main::-webkit-scrollbar-thumb {
-      background: var(--border2);
-      border-radius: 2px;
+      display: flex; align-items: center; gap: 14px;
+      padding: 0 18px; z-index: 10;
     }
     .logo {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-family: var(--cond);
-      font-size: 20px;
-      font-weight: 700;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      color: var(--accent);
-      white-space: nowrap;
+      display: flex; align-items: center; gap: 8px;
+      font-family: var(--cond); font-size: 20px; font-weight: 700;
+      letter-spacing: 3px; text-transform: uppercase;
+      color: var(--accent); white-space: nowrap;
     }
     .logo-sq {
-      width: 30px;
-      height: 30px;
-      background: var(--accent);
-      border-radius: 5px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: var(--mono);
-      font-size: 13px;
-      color: #fff;
+      width: 30px; height: 30px; background: var(--accent);
+      border-radius: 5px; display: flex; align-items: center;
+      justify-content: center; font-family: var(--mono);
+      font-size: 13px; color: #fff;
     }
-    .search-wrap {
-      flex: 1;
-      max-width: 480px;
-      position: relative;
-    }
+    .search-wrap { flex: 1; max-width: 480px; position: relative; }
     .search-wrap input {
-      width: 100%;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 7px 14px;
-      color: var(--text);
-      font-family: var(--sans);
-      font-size: 13px;
-      outline: none;
+      width: 100%; background: var(--panel); border: 1px solid var(--border);
+      border-radius: 6px; padding: 7px 14px; color: var(--text);
+      font-family: var(--sans); font-size: 13px; outline: none;
       transition: border-color .2s;
     }
-    .search-wrap input:focus {
-      border-color: var(--accent);
-    }
-    .search-wrap input::placeholder {
-      color: var(--muted);
-    }
+    .search-wrap input:focus { border-color: var(--accent); }
+    .search-wrap input::placeholder { color: var(--muted); }
     .search-dropdown {
-      position: absolute;
-      top: calc(100% + 4px);
-      left: 0;
-      right: 0;
-      background: var(--panel2);
-      border: 1px solid var(--border2);
-      border-radius: 8px;
-      z-index: 100;
-      overflow: hidden;
-      display: none;
-      max-height: 320px;
-      overflow-y: auto;
+      position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+      background: var(--panel2); border: 1px solid var(--border2);
+      border-radius: 8px; z-index: 100; display: none;
+      max-height: 320px; overflow-y: auto;
     }
-    .search-dropdown.show {
-      display: block;
-    }
+    .search-dropdown.show { display: block; }
     .sdrop-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 9px 12px;
-      cursor: pointer;
-      transition: background .15s;
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px; cursor: pointer; transition: background .15s;
       border-bottom: 1px solid var(--border);
     }
-    .sdrop-item:last-child {
-      border-bottom: none;
-    }
-    .sdrop-item:hover {
-      background: rgba(82,165,240,0.08);
-    }
-    .sdrop-item img {
-      width: 44px;
-      height: 32px;
-      object-fit: contain;
-    }
+    .sdrop-item:last-child { border-bottom: none; }
+    .sdrop-item:hover { background: rgba(82,165,240,0.08); }
+    .sdrop-item img { width: 44px; height: 32px; object-fit: contain; }
     .sdrop-name {
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--text);
-      flex: 1;
-      min-width: 0;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      font-size: 12px; font-weight: 500; color: var(--text); flex: 1;
+      min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    .sdrop-price {
-      font-size: 12px;
-      color: var(--gold);
-      font-family: var(--mono);
-    }
-    .sdrop-add {
-      font-size: 11px;
-      color: var(--accent);
-      white-space: nowrap;
-    }
-    .search-hint {
-      padding: 11px 12px;
-      font-size: 12px;
-      color: var(--muted);
-      text-align: center;
-    }
-    .topbar-right {
-      margin-left: auto;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: var(--green);
-      flex-shrink: 0;
-    }
-    .dot.off {
-      background: var(--red);
-    }
-    .status-txt {
-      font-size: 11px;
-      color: var(--muted2);
-    }
-    .btn {
-      background: var(--accent);
-      border: none;
-      border-radius: 6px;
-      padding: 7px 16px;
-      color: #fff;
-      font-family: var(--sans);
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: opacity .2s, transform .1s;
-    }
-    .btn:hover {
-      opacity: .85;
-    }
-    .btn:active {
-      transform: scale(.97);
-    }
-    .btn:disabled {
-      opacity: .35;
-      cursor: not-allowed;
-    }
-    .btn.ghost {
-      background: transparent;
-      border: 1px solid var(--border2);
-      color: var(--muted2);
-    }
-    .btn.ghost:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-      background: rgba(82,165,240,.06);
-    }
-    .btn.sm {
-      padding: 4px 10px;
-      font-size: 11px;
-    }
-    .btn.gold {
-      background: var(--gold);
-      color: #1a1200;
-    }
-    .sidebar-top {
-      padding: 10px 12px 0;
-    }
-    .s-label {
-      font-size: 10px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: var(--muted);
-      padding: 10px 14px 4px;
-    }
-    .watchlist {
-      flex: 1;
-      overflow-y: auto;
-    }
-    .watchlist::-webkit-scrollbar {
-      width: 3px;
-    }
-    .watchlist::-webkit-scrollbar-thumb {
-      background: var(--border2);
-      border-radius: 2px;
-    }
-    .wcard {
-      padding: 11px 14px;
-      border-bottom: 1px solid rgba(82,165,240,.05);
-      cursor: pointer;
+    .sdrop-price { font-size: 12px; color: var(--gold); font-family: var(--mono); }
+    .sdrop-add { font-size: 11px; color: var(--accent); white-space: nowrap; }
+    .search-hint { padding: 11px 12px; font-size: 12px; color: var(--muted); text-align: center; }
+
+    /* ── TOPBAR RIGHT ── */
+    .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+    .dot.off { background: var(--red); }
+    .status-txt { font-size: 11px; color: var(--muted2); }
+
+    /* ── USER BADGE (stan zalogowania) ── */
+    .user-badge {
+      display: flex; align-items: center; gap: 7px;
+      background: var(--panel); border: 1px solid var(--border2);
+      border-radius: 20px; padding: 4px 12px 4px 6px;
+      cursor: pointer; transition: border-color .2s, background .2s;
       position: relative;
-      transition: background .15s;
+    }
+    .user-badge:hover { border-color: var(--accent); background: var(--panel2); }
+    .user-avatar {
+      width: 24px; height: 24px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), #2060b0);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: #fff;
+      font-family: var(--mono); flex-shrink: 0;
+    }
+    .user-email {
+      font-size: 12px; color: var(--muted2); max-width: 140px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .user-dropdown {
+      position: absolute; top: calc(100% + 6px); right: 0;
+      background: var(--panel2); border: 1px solid var(--border2);
+      border-radius: 8px; min-width: 160px; display: none;
+      z-index: 200; overflow: hidden;
+    }
+    .user-badge:hover .user-dropdown,
+    .user-badge.open .user-dropdown { display: block; }
+    .user-dropdown-item {
+      padding: 9px 14px; font-size: 12px; color: var(--muted2);
+      cursor: pointer; transition: background .15s, color .15s;
+      border-bottom: 1px solid var(--border);
+    }
+    .user-dropdown-item:last-child { border-bottom: none; }
+    .user-dropdown-item:hover { background: rgba(82,165,240,.08); color: var(--text); }
+    .user-dropdown-item.danger:hover { background: rgba(240,96,96,.08); color: var(--red); }
+
+    /* ── BUTTONS ── */
+    .btn {
+      background: var(--accent); border: none; border-radius: 6px;
+      padding: 7px 16px; color: #fff; font-family: var(--sans);
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      white-space: nowrap; transition: opacity .2s, transform .1s;
+    }
+    .btn:hover { opacity: .85; }
+    .btn:active { transform: scale(.97); }
+    .btn:disabled { opacity: .35; cursor: not-allowed; }
+    .btn.ghost {
+      background: transparent; border: 1px solid var(--border2); color: var(--muted2);
+    }
+    .btn.ghost:hover { border-color: var(--accent); color: var(--accent); background: rgba(82,165,240,.06); }
+    .btn.sm { padding: 4px 10px; font-size: 11px; }
+    .btn.gold { background: var(--gold); color: #1a1200; }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      background: var(--surface); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .sidebar-top { padding: 10px 12px 0; }
+    .s-label {
+      font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--muted); padding: 10px 14px 4px;
+    }
+    .watchlist { flex: 1; overflow-y: auto; }
+    .watchlist::-webkit-scrollbar { width: 3px; }
+    .watchlist::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+    /* ── WATCHLIST CARDS ── */
+    .wcard {
+      padding: 11px 14px; border-bottom: 1px solid rgba(82,165,240,.05);
+      cursor: pointer; position: relative; transition: background .15s;
       border-left: 2px solid transparent;
     }
-    .wcard:hover {
-      background: var(--panel);
-    }
-    .wcard.active {
-      background: var(--panel);
-      border-left-color: var(--accent);
-    }
-    .wc-name {
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--text);
-      line-height: 1.3;
-      padding-right: 26px;
-    }
-    .wc-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-top: 4px;
-    }
-    .wc-price {
-      font-family: var(--mono);
-      font-size: 13px;
-      color: var(--gold);
-    }
-    .wc-chg {
-      font-family: var(--mono);
-      font-size: 11px;
-    }
-    .wc-pnl {
-      font-size: 10px;
-      color: var(--muted2);
-      margin-top: 2px;
-    }
-    .wc-pnl span {
-      font-family: var(--mono);
-    }
-    .wc-time {
-      font-size: 10px;
-      color: var(--muted);
-      margin-top: 2px;
-    }
+    .wcard:hover { background: var(--panel); }
+    .wcard.active { background: var(--panel); border-left-color: var(--accent); }
+    .wc-name { font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.3; padding-right: 26px; }
+    .wc-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+    .wc-price { font-family: var(--mono); font-size: 13px; color: var(--gold); }
+    .wc-chg { font-family: var(--mono); font-size: 11px; }
+    .wc-pnl { font-size: 10px; color: var(--muted2); margin-top: 2px; }
+    .wc-pnl span { font-family: var(--mono); }
+    .wc-time { font-size: 10px; color: var(--muted); margin-top: 2px; }
     .wc-del {
-      position: absolute;
-      right: 8px;
-      top: 50%;
-      transform: translateY(-50%);
-      background: none;
-      border: none;
-      color: var(--muted);
-      cursor: pointer;
-      font-size: 13px;
-      padding: 4px;
-      border-radius: 3px;
-      line-height: 1;
+      position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; color: var(--muted); cursor: pointer;
+      font-size: 13px; padding: 4px; border-radius: 3px; line-height: 1;
       transition: color .15s, background .15s;
     }
-    .wc-del:hover {
-      color: var(--red);
-      background: rgba(240,96,96,.1);
-    }
-    .sidebar-footer {
-      padding: 10px 12px;
-      border-top: 1px solid var(--border);
-    }
-    .refresh-note {
-      font-size: 10px;
-      color: var(--muted);
-      text-align: center;
-      margin-top: 6px;
-    }
+    .wc-del:hover { color: var(--red); background: rgba(240,96,96,.1); }
+    .sidebar-footer { padding: 10px 12px; border-top: 1px solid var(--border); }
+    .refresh-note { font-size: 10px; color: var(--muted); text-align: center; margin-top: 6px; }
+
+    /* ── MAIN ── */
+    .main { overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+    .main::-webkit-scrollbar { width: 4px; }
+    .main::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+    /* ── EMPTY STATE ── */
     .empty-state {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      color: var(--muted);
+      height: 100%; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 10px; color: var(--muted);
     }
-    .empty-icon {
-      font-size: 52px;
-      opacity: .2;
-    }
-    .empty-title {
-      font-size: 15px;
-      font-weight: 500;
-      color: var(--muted2);
-    }
+    .empty-icon { font-size: 52px; opacity: .2; }
+    .empty-title { font-size: 15px; font-weight: 500; color: var(--muted2); }
+
+    /* ── ITEM HEADER ── */
     .item-header {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 16px 20px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 16px 20px;
+      display: flex; align-items: center; gap: 16px;
     }
     .item-img {
-      width: 80px;
-      height: 56px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      flex-shrink: 0;
+      width: 80px; height: 56px; background: var(--panel);
+      border: 1px solid var(--border); border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden; flex-shrink: 0;
     }
-    .item-img img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-    }
-    .item-info {
-      flex: 1;
-      min-width: 0;
-    }
-    .item-name {
-      font-family: var(--cond);
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--text);
-    }
-    .item-meta {
-      font-size: 11px;
-      color: var(--muted2);
-      margin-top: 3px;
-    }
-    .price-block {
-      text-align: right;
-      flex-shrink: 0;
-    }
-    .price-main {
-      font-family: var(--mono);
-      font-size: 30px;
-      color: var(--gold);
-      line-height: 1;
-    }
-    .price-chg {
-      font-family: var(--mono);
-      font-size: 12px;
-      margin-top: 4px;
-    }
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
-    }
+    .item-img img { width: 100%; height: 100%; object-fit: contain; }
+    .item-info { flex: 1; min-width: 0; }
+    .item-name { font-family: var(--cond); font-size: 18px; font-weight: 700; color: var(--text); }
+    .item-meta { font-size: 11px; color: var(--muted2); margin-top: 3px; }
+    .price-block { text-align: right; flex-shrink: 0; }
+    .price-main { font-family: var(--mono); font-size: 30px; color: var(--gold); line-height: 1; }
+    .price-chg { font-family: var(--mono); font-size: 12px; margin-top: 4px; }
+
+    /* ── STATS ── */
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
     .stat {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 12px 14px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 12px 14px;
     }
-    .stat-lbl {
-      font-size: 10px;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 6px;
-    }
-    .stat-val {
-      font-family: var(--mono);
-      font-size: 17px;
-    }
-    .pbox {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 16px 20px;
-    }
-    .pbox-hdr {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 14px;
-    }
-    .pbox-title {
-      font-family: var(--cond);
-      font-size: 13px;
-      font-weight: 600;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: var(--muted2);
-    }
-    .pform {
-      display: flex;
-      gap: 10px;
-      align-items: flex-end;
-    }
-    .fg {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-    }
-    .fg-lbl {
-      font-size: 10px;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
+    .stat-lbl { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+    .stat-val { font-family: var(--mono); font-size: 17px; }
+
+    /* ── PBOX ── */
+    .pbox { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; }
+    .pbox-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .pbox-title { font-family: var(--cond); font-size: 13px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--muted2); }
+    .pform { display: flex; gap: 10px; align-items: flex-end; }
+    .fg { display: flex; flex-direction: column; gap: 5px; }
+    .fg-lbl { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
     .fg-inp {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 8px 12px;
-      color: var(--text);
-      font-family: var(--mono);
-      font-size: 14px;
-      outline: none;
-      transition: border-color .2s;
-      width: 140px;
+      background: var(--panel); border: 1px solid var(--border); border-radius: 6px;
+      padding: 8px 12px; color: var(--text); font-family: var(--mono);
+      font-size: 14px; outline: none; transition: border-color .2s; width: 140px;
     }
-    .fg-inp:focus {
-      border-color: var(--accent);
-    }
+    .fg-inp:focus { border-color: var(--accent); }
     .pnl-row {
-      display: flex;
-      gap: 20px;
-      padding: 14px 0 0;
-      border-top: 1px solid var(--border);
-      margin-top: 14px;
-      flex-wrap: wrap;
+      display: flex; gap: 20px; padding: 14px 0 0;
+      border-top: 1px solid var(--border); margin-top: 14px; flex-wrap: wrap;
     }
-    .pnl-item {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .pnl-lbl {
-      font-size: 10px;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-    .pnl-val {
-      font-family: var(--mono);
-      font-size: 16px;
-    }
-    .chart-box {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 16px;
-    }
-    .chart-hdr {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
-    }
-    .chart-title {
-      font-size: 10px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-    .chart-tabs {
-      display: flex;
-      gap: 4px;
-    }
+    .pnl-item { display: flex; flex-direction: column; gap: 4px; }
+    .pnl-lbl { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+    .pnl-val { font-family: var(--mono); font-size: 16px; }
+
+    /* ── CHART ── */
+    .chart-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+    .chart-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .chart-title { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+    .chart-tabs { display: flex; gap: 4px; }
     .ctab {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 3px 10px;
-      font-size: 11px;
-      cursor: pointer;
-      color: var(--muted2);
-      transition: all .15s;
+      background: var(--panel); border: 1px solid var(--border); border-radius: 4px;
+      padding: 3px 10px; font-size: 11px; cursor: pointer; color: var(--muted2); transition: all .15s;
     }
-    .ctab.active,
-    .ctab:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-      background: rgba(82,165,240,.08);
-    }
-    .chart-area {
-      position: relative;
-      width: 100%;
-      height: 180px;
-    }
-    .tag {
-      display: inline-block;
-      padding: 2px 7px;
-      border-radius: 3px;
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: .5px;
-      text-transform: uppercase;
-    }
-    .tag.fn {
-      background: rgba(240,192,64,.12);
-      color: var(--gold);
-    }
-    .tag.mw {
-      background: rgba(82,165,240,.12);
-      color: #82c5f0;
-    }
-    .tag.ft {
-      background: rgba(61,214,140,.12);
-      color: var(--green);
-    }
-    .tag.ww {
-      background: rgba(160,174,192,.12);
-      color: #a0aec0;
-    }
-    .tag.bs {
-      background: rgba(240,96,96,.12);
-      color: var(--red);
-    }
-    .up {
-      color: var(--green);
-    }
-    .dn {
-      color: var(--red);
-    }
-    .nu {
-      color: var(--muted2);
-    }
+    .ctab.active, .ctab:hover { border-color: var(--accent); color: var(--accent); background: rgba(82,165,240,.08); }
+    .chart-area { position: relative; width: 100%; height: 180px; }
+
+    /* ── TAGS ── */
+    .tag { display: inline-block; padding: 2px 7px; border-radius: 3px; font-size: 10px; font-weight: 600; letter-spacing: .5px; text-transform: uppercase; }
+    .tag.fn { background: rgba(240,192,64,.12); color: var(--gold); }
+    .tag.mw { background: rgba(82,165,240,.12); color: #82c5f0; }
+    .tag.ft { background: rgba(61,214,140,.12); color: var(--green); }
+    .tag.ww { background: rgba(160,174,192,.12); color: #a0aec0; }
+    .tag.bs { background: rgba(240,96,96,.12); color: var(--red); }
+    .up { color: var(--green); }
+    .dn { color: var(--red); }
+    .nu { color: var(--muted2); }
+
+    /* ── MODALS ── */
     .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.65);
-      z-index: 200;
-      align-items: center;
-      justify-content: center;
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.65); z-index: 200;
+      align-items: center; justify-content: center;
     }
-    .modal-overlay.show {
-      display: flex;
-    }
+    .modal-overlay.show { display: flex; }
     .modal {
-      background: var(--panel);
-      border: 1px solid var(--border2);
-      border-radius: 12px;
-      padding: 24px;
-      width: 440px;
-      max-width: 96vw;
+      background: var(--panel); border: 1px solid var(--border2);
+      border-radius: 12px; padding: 24px; width: 440px; max-width: 96vw;
     }
-    .modal-title {
-      font-family: var(--cond);
-      font-size: 16px;
-      font-weight: 700;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      margin-bottom: 16px;
-    }
-    .mrow {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      margin-bottom: 14px;
-    }
-    .mlbl {
-      font-size: 11px;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
+    .modal-title { font-family: var(--cond); font-size: 16px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 16px; }
+    .mrow { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    .mlbl { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
     .minp {
-      background: var(--panel2);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 10px 14px;
-      color: var(--text);
-      font-family: var(--sans);
-      font-size: 14px;
-      outline: none;
-      transition: border-color .2s;
-      width: 100%;
+      background: var(--panel2); border: 1px solid var(--border); border-radius: 6px;
+      padding: 10px 14px; color: var(--text); font-family: var(--sans); font-size: 14px;
+      outline: none; transition: border-color .2s; width: 100%;
     }
-    .minp:focus {
-      border-color: var(--accent);
-    }
-    .mhint {
-      font-size: 11px;
-      color: var(--muted);
-      margin-top: 3px;
-    }
-    .mbtns {
-      display: flex;
-      gap: 8px;
-      justify-content: flex-end;
-      margin-top: 18px;
-    }
+    .minp:focus { border-color: var(--accent); }
+    .mhint { font-size: 11px; color: var(--muted); margin-top: 3px; }
+    .mbtns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
     .msearch-results {
-      margin-top: 6px;
-      background: var(--panel2);
-      border: 1px solid var(--border2);
-      border-radius: 8px;
-      overflow: hidden;
-      display: none;
-      max-height: 240px;
-      overflow-y: auto;
+      margin-top: 6px; background: var(--panel2); border: 1px solid var(--border2);
+      border-radius: 8px; overflow: hidden; display: none; max-height: 240px; overflow-y: auto;
     }
-    .msearch-results.show {
-      display: block;
-    }
+    .msearch-results.show { display: block; }
     .msr-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 12px;
-      cursor: pointer;
-      transition: background .15s;
-      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+      cursor: pointer; transition: background .15s; border-bottom: 1px solid var(--border);
     }
-    .msr-item:last-child {
-      border-bottom: none;
-    }
-    .msr-item:hover {
-      background: rgba(82,165,240,.1);
-    }
-    .msr-item img {
-      width: 44px;
-      height: 32px;
-      object-fit: contain;
-    }
-    .msr-name {
-      flex: 1;
-      font-size: 12px;
-      color: var(--text);
-      min-width: 0;
-    }
-    .msr-price {
-      font-size: 12px;
-      font-family: var(--mono);
-      color: var(--gold);
-    }
+    .msr-item:last-child { border-bottom: none; }
+    .msr-item:hover { background: rgba(82,165,240,.1); }
+    .msr-item img { width: 44px; height: 32px; object-fit: contain; }
+    .msr-name { flex: 1; font-size: 12px; color: var(--text); min-width: 0; }
+    .msr-price { font-size: 12px; font-family: var(--mono); color: var(--gold); }
     .selected-pill {
-      background: rgba(82,165,240,.1);
-      border: 1px solid rgba(82,165,240,.3);
-      border-radius: 6px;
-      padding: 8px 12px;
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--accent);
+      background: rgba(82,165,240,.1); border: 1px solid rgba(82,165,240,.3);
+      border-radius: 6px; padding: 8px 12px; font-size: 13px; font-weight: 500; color: var(--accent);
     }
+
+    /* ── LOGIN REQUIRED BANNER ── */
+    .login-banner {
+      background: rgba(82,165,240,.07); border: 1px solid rgba(82,165,240,.2);
+      border-radius: 8px; padding: 12px 16px; font-size: 12px; color: var(--muted2);
+      text-align: center; margin: 8px 12px;
+    }
+    .login-banner a { color: var(--accent); cursor: pointer; text-decoration: underline; }
+
+    /* ── SPINNER ── */
     .spin {
-      display: inline-block;
-      width: 13px;
-      height: 13px;
-      border: 2px solid var(--border2);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin .7s linear infinite;
-      vertical-align: middle;
+      display: inline-block; width: 13px; height: 13px;
+      border: 2px solid var(--border2); border-top-color: var(--accent);
+      border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle;
     }
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── TOASTS ── */
     .toast-wrap {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      z-index: 300;
-      pointer-events: none;
+      position: fixed; bottom: 20px; right: 20px;
+      display: flex; flex-direction: column; gap: 8px; z-index: 300; pointer-events: none;
     }
     .toast {
-      background: var(--panel2);
-      border: 1px solid var(--border2);
-      border-radius: 8px;
-      padding: 10px 16px;
-      font-size: 13px;
-      color: var(--text);
-      animation: tin .2s ease;
-      max-width: 300px;
+      background: var(--panel2); border: 1px solid var(--border2);
+      border-radius: 8px; padding: 10px 16px; font-size: 13px; color: var(--text);
+      animation: tin .2s ease; max-width: 300px;
     }
-    .toast.ok {
-      border-color: rgba(61,214,140,.4);
-    }
-    .toast.err {
-      border-color: rgba(240,96,96,.4);
-      color: var(--red);
-    }
+    .toast.ok { border-color: rgba(61,214,140,.4); }
+    .toast.err { border-color: rgba(240,96,96,.4); color: var(--red); }
     @keyframes tin {
-      from {
-        opacity: 0;
-        transform: translateY(8px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
     }
-    .actions-row {
-      display: flex;
-      gap: 8px;
-      justify-content: flex-end;
-    }
+    .actions-row { display: flex; gap: 8px; justify-content: flex-end; }
+
     @media (max-width: 700px) {
-      .body {
-        grid-template-columns: 1fr;
-      }
-      .sidebar {
-        display: none;
-      }
-      .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
+      .body { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
     }
   </style>
 </head>
 <body>
-  <div class="layout">
-    <!-- TOPBAR -->
-    <div class="topbar">
-      <div class="logo">
-        <div class="logo-sq">CS</div>
-        Price Tracker
-      </div>
-      <div class="search-wrap">
-        <input type="text" id="searchInput" placeholder="Szukaj skórki na Steam Market..." autocomplete="off" />
-        <div class="search-dropdown" id="searchDrop"></div>
-      </div>
-      <div class="topbar-right">
-        <div class="dot" id="sDot"></div>
-        <div class="status-txt" id="sTxt">Łączenie...</div>
-        <!-- DODANE: przycisk logowania -->
-        <button class="btn ghost" onclick="openAuthModal()">Zaloguj</button>
-      </div>
+<div class="layout">
+
+  <!-- ── TOPBAR ── -->
+  <div class="topbar">
+    <div class="logo">
+      <div class="logo-sq">CS</div>
+      Price Tracker
     </div>
+    <div class="search-wrap">
+      <input type="text" id="searchInput" placeholder="Szukaj skórki na Steam Market..." autocomplete="off" />
+      <div class="search-dropdown" id="searchDrop"></div>
+    </div>
+    <div class="topbar-right">
+      <div class="dot" id="sDot"></div>
+      <div class="status-txt" id="sTxt">Łączenie...</div>
 
-    <div class="body">
-      <!-- SIDEBAR -->
-      <div class="sidebar">
-        <div class="sidebar-top">
-          <button class="btn" style="width:100%;margin-bottom:4px" onclick="openModal()">
-            + Dodaj przedmiot
-          </button>
-        </div>
-        <div class="s-label">
-          Obserwowane (<span id="cnt">0</span>)
-        </div>
-        <div class="watchlist" id="wlist"></div>
-        <div class="sidebar-footer">
-          <button class="btn ghost" style="width:100%" onclick="refreshAll()" id="rafBtn">
-            ⟳ Odśwież wszystko
-          </button>
-          <div class="refresh-note" id="rafNote">
-            Auto-odświeżanie co 1 godzinę
-          </div>
-        </div>
+      <!-- Stan niezalogowany -->
+      <div id="guestButtons" style="display:flex;gap:8px">
+        <button class="btn ghost" onclick="openAuthModal()">Zaloguj</button>
+        <button class="btn gold" onclick="openRegisterModal()">Rejestracja</button>
       </div>
 
-      <!-- MAIN -->
-      <div class="main" id="main">
-        <div class="empty-state" id="emptyState">
-          <div class="empty-icon">🎯</div>
-          <div class="empty-title">Brak wybranego przedmiotu</div>
-          <div style="font-size:13px">
-            Dodaj skórki z listy po lewej i śledź ich ceny
-          </div>
-          <button class="btn" style="margin-top:14px" onclick="openModal()">
-            + Dodaj pierwszy przedmiot
-          </button>
+      <!-- Stan zalogowany -->
+      <div class="user-badge" id="userBadge" style="display:none" onclick="toggleUserDropdown(event)">
+        <div class="user-avatar" id="userAvatar">?</div>
+        <div class="user-email" id="userEmail">—</div>
+        <div class="user-dropdown" id="userDropdown">
+          <div class="user-dropdown-item" style="color:var(--muted);font-size:11px;cursor:default" id="userDropdownEmail">—</div>
+          <div class="user-dropdown-item danger" onclick="logout()">Wyloguj</div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- MODAL: dodawanie przedmiotu -->
-  <div class="modal-overlay" id="modal">
-    <div class="modal">
-      <div class="modal-title">Dodaj przedmiot do śledzenia</div>
-      <div class="mrow">
-        <div class="mlbl">Wyszukaj na Steam Market</div>
-        <input class="minp" type="text" id="mSearch" placeholder="np. AK-47 | Redline Field-Tested" autocomplete="off" />
-        <div class="msearch-results" id="mResults"></div>
+  <div class="body">
+    <!-- ── SIDEBAR ── -->
+    <div class="sidebar">
+      <div class="sidebar-top">
+        <button class="btn" style="width:100%;margin-bottom:4px" onclick="openModal()">
+          + Dodaj przedmiot
+        </button>
       </div>
-      <div class="mrow" id="mSelRow" style="display:none">
-        <div class="mlbl">Wybrany</div>
-        <div class="selected-pill" id="mSelName"></div>
+      <div id="loginBanner" class="login-banner" style="display:none">
+        <a onclick="openAuthModal()">Zaloguj się</a>, by obserwować przedmioty
       </div>
-      <div class="mrow">
-        <div class="mlbl">Cena zakupu w PLN (opcjonalnie)</div>
-        <input class="minp" type="number" id="mBuy" placeholder="np. 14,50" step="0.01" min="0" style="width:180px" />
-        <div class="mhint">
-          Zostaw puste jeśli nie kupiłeś — możesz dodać później
-        </div>
+      <div class="s-label">Obserwowane (<span id="cnt">0</span>)</div>
+      <div class="watchlist" id="wlist"></div>
+      <div class="sidebar-footer">
+        <button class="btn ghost" style="width:100%" onclick="refreshAll()" id="rafBtn">
+          ⟳ Odśwież wszystko
+        </button>
+        <div class="refresh-note" id="rafNote">Auto-odświeżanie co 1 godzinę</div>
       </div>
-      <div class="mbtns">
-        <button class="btn ghost" onclick="closeModal()">Anuluj</button>
-        <button class="btn" id="mAddBtn" onclick="addItem()" disabled>
-          Dodaj do obserwowanych
+    </div>
+
+    <!-- ── MAIN ── -->
+    <div class="main" id="main">
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">🎯</div>
+        <div class="empty-title">Brak wybranego przedmiotu</div>
+        <div style="font-size:13px">Dodaj skórki z listy po lewej i śledź ich ceny</div>
+        <button class="btn" style="margin-top:14px" onclick="openModal()">
+          + Dodaj pierwszy przedmiot
         </button>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- DODANE: MODAL LOGOWANIA -->
-  <div class="modal-overlay" id="auth-modal">
-    <div class="modal">
-      <div class="modal-title">Logowanie</div>
-
-      <div class="mrow">
-        <div class="mlbl">Email</div>
-        <input id="auth-email" class="minp" type="email" placeholder="email@example.com" autocomplete="email" />
-      </div>
-
-      <div class="mrow">
-        <div class="mlbl">Hasło</div>
-        <input id="auth-password" class="minp" type="password" placeholder="••••••••" autocomplete="current-password" />
-      </div>
-
-      <div class="mbtns">
-        <button class="btn ghost" onclick="closeAuthModal()">Anuluj</button>
-        <button class="btn" onclick="login()">Zaloguj</button>
-        <button class="btn gold" onclick="openRegisterModal()">Rejestracja</button>
-      </div>
+<!-- ── MODAL: dodaj przedmiot ── -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-title">Dodaj przedmiot do śledzenia</div>
+    <div class="mrow">
+      <div class="mlbl">Wyszukaj na Steam Market</div>
+      <input class="minp" type="text" id="mSearch" placeholder="np. AK-47 | Redline Field-Tested" autocomplete="off" />
+      <div class="msearch-results" id="mResults"></div>
+    </div>
+    <div class="mrow" id="mSelRow" style="display:none">
+      <div class="mlbl">Wybrany</div>
+      <div class="selected-pill" id="mSelName"></div>
+    </div>
+    <div class="mrow">
+      <div class="mlbl">Cena zakupu w PLN (opcjonalnie)</div>
+      <input class="minp" type="number" id="mBuy" placeholder="np. 14,50" step="0.01" min="0" style="width:180px" />
+      <div class="mhint">Zostaw puste jeśli nie kupiłeś — możesz dodać później</div>
+    </div>
+    <div class="mbtns">
+      <button class="btn ghost" onclick="closeModal()">Anuluj</button>
+      <button class="btn" id="mAddBtn" onclick="addItem()" disabled>Dodaj do obserwowanych</button>
     </div>
   </div>
-  <div class="modal-overlay" id="register-modal">
+</div>
+
+<!-- ── MODAL: logowanie ── -->
+<div class="modal-overlay" id="auth-modal">
+  <div class="modal">
+    <div class="modal-title">Logowanie</div>
+    <div class="mrow">
+      <div class="mlbl">Email</div>
+      <input id="auth-email" class="minp" type="email" placeholder="email@example.com" autocomplete="email" />
+    </div>
+    <div class="mrow">
+      <div class="mlbl">Hasło</div>
+      <input id="auth-password" class="minp" type="password" placeholder="••••••••" autocomplete="current-password" />
+    </div>
+    <div class="mbtns">
+      <button class="btn ghost" onclick="closeAuthModal()">Anuluj</button>
+      <button class="btn" onclick="login()">Zaloguj</button>
+      <button class="btn gold" onclick="switchToRegister()">Rejestracja</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: rejestracja ── -->
+<div class="modal-overlay" id="register-modal">
   <div class="modal">
     <div class="modal-title">Rejestracja</div>
-
     <div class="mrow">
       <div class="mlbl">Email</div>
       <input id="reg-email" class="minp" type="email" placeholder="email@example.com" autocomplete="email" />
     </div>
-
     <div class="mrow">
       <div class="mlbl">Hasło</div>
       <input id="reg-password" class="minp" type="password" placeholder="••••••••" autocomplete="new-password" />
     </div>
-
     <div class="mrow">
       <div class="mlbl">Powtórz hasło</div>
       <input id="reg-password2" class="minp" type="password" placeholder="••••••••" autocomplete="new-password" />
     </div>
-
     <div class="mbtns">
       <button class="btn ghost" onclick="closeRegisterModal()">Anuluj</button>
       <button class="btn gold" onclick="registerUser()">Utwórz konto</button>
     </div>
   </div>
 </div>
-  <div class="toast-wrap" id="toasts"></div>
 
-  <script>
-    // API base — relative paths work both locally and on Railway
-    const API = '/api';
+<div class="toast-wrap" id="toasts"></div>
 
+<script>
+  const API = '/api';
 
+  // ── Stan aplikacji ──
+  let items = [];
+  let activeId = null;
+  let chart = null;
+  let chartRange = '7d';
+  let fullHistory = [];
+  let mSelected = null;
+  let mSearchT = null;
+  let topSearchT = null;
 
-    
-   function authHeaders(includeJson = false) {
-  const token = localStorage.getItem('token');
-  return {
-    ...(includeJson ? { 'Content-Type': 'application/json' } : {}),
-    ...(token ? { Authorization: 'Bearer ' + token } : {})
-  };
-}
-    let items = [];
-    let activeId = null;
-    let chart = null;
-    let chartRange = '7d';
-    let fullHistory = [];
-    let mSelected = null;
-    let mSearchT = null;
-    let topSearchT = null;
+  // Cache dla wyników wyszukiwania (fix dla znaków specjalnych w onclick)
+  const searchCache = {};
 
-    const $ = id => document.getElementById(id);
-    const fmt = p => p != null
-      ? parseFloat(p).toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' zł'
-      : '—';
-    const fmtPct = p => (p > 0 ? '+' : '') + p.toFixed(2) + '%';
+  const $ = id => document.getElementById(id);
+  const fmt = p => p != null
+    ? parseFloat(p).toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' zł'
+    : '—';
+  const fmtPct = p => (p > 0 ? '+' : '') + p.toFixed(2) + '%';
 
-    function timeAgo(ts) {
-      if (!ts) return 'nigdy';
-      const s = (Date.now() - ts) / 1000;
-      if (s < 60) return 'przed chwilą';
-      if (s < 3600) return Math.floor(s / 60) + ' min temu';
-      if (s < 86400) return Math.floor(s / 3600) + ' h temu';
-      return Math.floor(s / 86400) + ' d temu';
-    }
+  function timeAgo(ts) {
+    if (!ts) return 'nigdy';
+    const s = (Date.now() - ts) / 1000;
+    if (s < 60) return 'przed chwilą';
+    if (s < 3600) return Math.floor(s / 60) + ' min temu';
+    if (s < 86400) return Math.floor(s / 3600) + ' h temu';
+    return Math.floor(s / 86400) + ' d temu';
+  }
 
-    function wearKey(name) {
-      const n = name.toLowerCase();
-      if (n.includes('factory new')) return 'fn';
-      if (n.includes('minimal wear')) return 'mw';
-      if (n.includes('field-tested')) return 'ft';
-      if (n.includes('well-worn')) return 'ww';
-      if (n.includes('battle-scarred')) return 'bs';
-      return '';
-    }
+  function wearKey(name) {
+    const n = name.toLowerCase();
+    if (n.includes('factory new')) return 'fn';
+    if (n.includes('minimal wear')) return 'mw';
+    if (n.includes('field-tested')) return 'ft';
+    if (n.includes('well-worn')) return 'ww';
+    if (n.includes('battle-scarred')) return 'bs';
+    return '';
+  }
 
-    const WEAR_NAME = {
-      fn: 'Factory New',
-      mw: 'Minimal Wear',
-      ft: 'Field-Tested',
-      ww: 'Well-Worn',
-      bs: 'Battle-Scarred'
+  const WEAR_NAME = { fn: 'Factory New', mw: 'Minimal Wear', ft: 'Field-Tested', ww: 'Well-Worn', bs: 'Battle-Scarred' };
+
+  function toast(msg, type = '') {
+    const el = document.createElement('div');
+    el.className = 'toast ' + type;
+    el.textContent = msg;
+    $('toasts').appendChild(el);
+    setTimeout(() => el.remove(), 3500);
+  }
+
+  // ── AUTH helpers ──
+  function authHeaders(includeJson = false) {
+    const token = localStorage.getItem('token');
+    return {
+      ...(includeJson ? { 'Content-Type': 'application/json' } : {}),
+      ...(token ? { Authorization: 'Bearer ' + token } : {})
     };
+  }
 
-    function toast(msg, type = '') {
-      const el = document.createElement('div');
-      el.className = 'toast ' + type;
-      el.textContent = msg;
-      $('toasts').appendChild(el);
-      setTimeout(() => el.remove(), 3500);
+  function isLoggedIn() {
+    return !!localStorage.getItem('token');
+  }
+
+  // Dekoduj email z JWT (bez weryfikacji — tylko do wyświetlenia)
+  function getEmailFromToken() {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return null;
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.email || null;
+    } catch { return null; }
+  }
+
+  // ── Aktualizacja UI stanu zalogowania ──
+  function updateAuthUI() {
+    const loggedIn = isLoggedIn();
+    $('guestButtons').style.display = loggedIn ? 'none' : 'flex';
+    $('userBadge').style.display = loggedIn ? 'flex' : 'none';
+    $('loginBanner').style.display = loggedIn ? 'none' : 'block';
+
+    if (loggedIn) {
+      // Pobierz email z backendu lub z localStorage
+      const email = localStorage.getItem('userEmail') || '—';
+      const initials = email && email !== '—' ? email[0].toUpperCase() : '?';
+      $('userAvatar').textContent = initials;
+      $('userEmail').textContent = email;
+      $('userDropdownEmail').textContent = email;
     }
+  }
 
-    async function checkStatus() {
-      try {
-        const r = await fetch(API + '/health', { signal: AbortSignal.timeout(4000) });
-        if (r.ok) {
-          $('sDot').className = 'dot';
-          $('sTxt').textContent = 'Backend online';
-        } else throw new Error();
-      } catch {
-        $('sDot').className = 'dot off';
-        $('sTxt').textContent = 'Backend offline';
-      }
-    }
+  function toggleUserDropdown(e) {
+    e.stopPropagation();
+    $('userBadge').classList.toggle('open');
+  }
 
-    async function loadWatchlist() {
-      try {
-        const r = await fetch(API + '/watchlist', {
-  headers: authHeaders()
-});
-        items = await r.json();
-        $('cnt').textContent = items.length;
-        renderSidebar();
-      } catch (e) {
-        console.error(e);
-      }
-    }
+  document.addEventListener('click', () => {
+    $('userBadge').classList.remove('open');
+  });
 
-    function renderSidebar() {
-      const el = $('wlist');
-      if (!items.length) {
-        el.innerHTML =
-          '<div style="padding:20px 14px;color:var(--muted);font-size:12px;text-align:center">' +
-          'Brak przedmiotów.<br>Dodaj coś, by zacząć śledzić.' +
-          '</div>';
-        return;
-      }
-      el.innerHTML = items
-        .map(item => {
-          const pct = item.currentPrice && item.buyPrice
-            ? ((item.currentPrice - item.buyPrice) / item.buyPrice) * 100
-            : null;
-          const cls =
-            pct != null
-              ? pct > 0.3
-                ? 'up'
-                : pct < -0.3
-                  ? 'dn'
-                  : 'nu'
-              : 'nu';
-          const arrow =
-            pct != null
-              ? pct > 0.3
-                ? '▲'
-                : pct < -0.3
-                  ? '▼'
-                  : '—'
-              : '';
-          return `
-          <div class="wcard ${item.id === activeId ? 'active' : ''}" onclick="selectItem('${item.id}')">
-            <div class="wc-name">${item.name}</div>
-            <div class="wc-row">
-              <span class="wc-price">${fmt(item.currentPrice)}</span>
-              ${
-                pct != null
-                  ? `<span class="wc-chg ${cls}">${arrow} ${Math.abs(pct).toFixed(1)}%</span>`
-                  : ''
-              }
-            </div>
-            ${
-              item.buyPrice
-                ? `
-              <div class="wc-pnl">
-                Zakup: <span>${fmt(item.buyPrice)}</span>${
-                  item.currentPrice
-                    ? ` · P&L: <span class="${cls}">${
-                        pct >= 0 ? '+' : ''
-                      }${fmt(item.currentPrice - item.buyPrice)}</span>`
-                    : ''
-                }
-              </div>`
-                : ''
-            }
-            <div class="wc-time">${timeAgo(item.lastUpdated)}</div>
-            <button class="wc-del" onclick="deleteItem(event,'${item.id}')" title="Usuń">✕</button>
-          </div>`;
-        })
-        .join('');
-    }
+  function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userEmail');
+    items = [];
+    activeId = null;
+    $('cnt').textContent = '0';
+    $('wlist').innerHTML = '';
+    $('main').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🎯</div>
+        <div class="empty-title">Brak wybranego przedmiotu</div>
+        <div style="font-size:13px">Zaloguj się, by obserwować skórki</div>
+        <button class="btn" style="margin-top:14px" onclick="openAuthModal()">Zaloguj się</button>
+      </div>`;
+    updateAuthUI();
+    toast('Wylogowano', 'ok');
+  }
 
-    async function selectItem(id) {
-      activeId = id;
+  // ── Watchlist ──
+  async function loadWatchlist() {
+    if (!isLoggedIn()) { renderSidebar(); return; }
+    try {
+      const r = await fetch(API + '/watchlist', { headers: authHeaders() });
+      if (r.status === 401) { logout(); return; }
+      items = await r.json();
+      $('cnt').textContent = items.length;
       renderSidebar();
-      const item = items.find(w => w.id === id);
-      if (!item) return;
-      chartRange = '7d';
-      renderMain(item);
-      const r = await fetch(`${API}/history/${id}`, {
-  headers: authHeaders()
-});
+    } catch (e) { console.error(e); }
+  }
+
+  function renderSidebar() {
+    const el = $('wlist');
+    if (!items.length) {
+      el.innerHTML =
+        '<div style="padding:20px 14px;color:var(--muted);font-size:12px;text-align:center">' +
+        'Brak przedmiotów.<br>Dodaj coś, by zacząć śledzić.' +
+        '</div>';
+      return;
+    }
+    el.innerHTML = items.map(item => {
+      const pct = item.currentPrice && item.buyPrice
+        ? ((item.currentPrice - item.buyPrice) / item.buyPrice) * 100 : null;
+      const cls = pct != null ? (pct > 0.3 ? 'up' : pct < -0.3 ? 'dn' : 'nu') : 'nu';
+      const arrow = pct != null ? (pct > 0.3 ? '▲' : pct < -0.3 ? '▼' : '—') : '';
+      return `
+        <div class="wcard ${item.id === activeId ? 'active' : ''}" onclick="selectItem('${item.id}')">
+          <div class="wc-name">${item.name}</div>
+          <div class="wc-row">
+            <span class="wc-price">${fmt(item.currentPrice)}</span>
+            ${pct != null ? `<span class="wc-chg ${cls}">${arrow} ${Math.abs(pct).toFixed(1)}%</span>` : ''}
+          </div>
+          ${item.buyPrice ? `
+            <div class="wc-pnl">
+              Zakup: <span>${fmt(item.buyPrice)}</span>${item.currentPrice
+                ? ` · P&L: <span class="${cls}">${pct >= 0 ? '+' : ''}${fmt(item.currentPrice - item.buyPrice)}</span>` : ''}
+            </div>` : ''}
+          <div class="wc-time">${timeAgo(item.lastUpdated)}</div>
+          <button class="wc-del" onclick="deleteItem(event,'${item.id}')" title="Usuń">✕</button>
+        </div>`;
+    }).join('');
+  }
+
+  async function selectItem(id) {
+    activeId = id;
+    renderSidebar();
+    const item = items.find(w => w.id === id);
+    if (!item) return;
+    chartRange = '7d';
+    renderMain(item);
+    try {
+      const r = await fetch(`${API}/history/${id}`, { headers: authHeaders() });
       fullHistory = await r.json();
       renderChart();
       updateDayChange();
-    }
-
-    function renderMain(item) {
-      const wk = wearKey(item.name);
-      const pct = item.currentPrice && item.buyPrice
-        ? ((item.currentPrice - item.buyPrice) / item.buyPrice) * 100
-        : null;
-      const pnlAbs = pct != null ? item.currentPrice - item.buyPrice : null;
-      const cls =
-        pct != null
-          ? pct > 0.3
-            ? 'up'
-            : pct < -0.3
-              ? 'dn'
-              : 'nu'
-          : 'nu';
-      const arrow =
-        pct != null
-          ? pct > 0.3
-            ? '▲ '
-            : pct < -0.3
-              ? '▼ '
-              : ''
-          : '';
-      $('main').innerHTML = `
-        <div class="item-header">
-          <div class="item-img">
-            ${
-              item.imageUrl
-                ? `<img src="${item.imageUrl}" alt="" onerror="this.style.display='none'"/>`
-                : csPlaceholder()
-            }
-          </div>
-          <div class="item-info">
-            <div class="item-name">${item.name}</div>
-            <div class="item-meta">
-              ${wk ? `<span class="tag ${wk}">${WEAR_NAME[wk]}</span>&nbsp;` : ''}CS2 · Steam Market
-            </div>
-          </div>
-          <div class="price-block">
-            <div class="price-main">${fmt(item.currentPrice)}</div>
-            <div class="price-chg nu" id="dayChgRow">Ładowanie historii...</div>
-          </div>
-        </div>
-
-        <div class="stats-grid">
-          <div class="stat">
-            <div class="stat-lbl">Cena minimalna</div>
-            <div class="stat-val" style="color:var(--gold)">${fmt(item.currentPrice)}</div>
-          </div>
-          <div class="stat">
-            <div class="stat-lbl">Mediana 24h</div>
-            <div class="stat-val">${fmt(item.currentMedian)}</div>
-          </div>
-          <div class="stat">
-            <div class="stat-lbl">Wolumen 24h</div>
-            <div class="stat-val">${(item.currentVolume || 0).toLocaleString('pl-PL')}</div>
-          </div>
-          <div class="stat">
-            <div class="stat-lbl">Aktualizacja</div>
-            <div class="stat-val" style="font-size:13px;color:var(--muted2)">${timeAgo(item.lastUpdated)}</div>
-          </div>
-        </div>
-
-        <div class="pbox">
-          <div class="pbox-hdr">
-            <div class="pbox-title">Mój zakup &amp; P&amp;L</div>
-            <button class="btn sm gold" onclick="saveBuy('${item.id}')">Zapisz</button>
-          </div>
-          <div class="pform">
-            <div class="fg">
-              <div class="fg-lbl">Cena zakupu (PLN)</div>
-              <input class="fg-inp" type="number" id="buyInp" value="${item.buyPrice || ''}" placeholder="np. 12,50" step="0.01" min="0" />
-            </div>
-            <div style="color:var(--muted);font-size:22px;padding-bottom:8px">→</div>
-            <div class="fg" style="flex:1">
-              <div class="fg-lbl">Aktualna cena</div>
-              <div class="fg-inp" style="cursor:default;color:var(--gold)">
-                ${fmt(item.currentPrice)}
-              </div>
-            </div>
-          </div>
-          ${
-            pct != null
-              ? `
-            <div class="pnl-row">
-              <div class="pnl-item">
-                <div class="pnl-lbl">Zysk / Strata</div>
-                <div class="pnl-val ${cls}">${arrow}${fmt(Math.abs(pnlAbs))}</div>
-              </div>
-              <div class="pnl-item">
-                <div class="pnl-lbl">Zmiana %</div>
-                <div class="pnl-val ${cls}">${fmtPct(pct)}</div>
-              </div>
-              <div class="pnl-item">
-                <div class="pnl-lbl">Status</div>
-                <div class="pnl-val ${cls}">
-                  ${
-                    pct > 0.3
-                      ? '📈 Zysk'
-                      : pct < -0.3
-                        ? '📉 Strata'
-                        : '➖ Bez zmian'
-                  }
-                </div>
-              </div>
-            </div>`
-              : `
-            <div style="font-size:12px;color:var(--muted);margin-top:10px">
-              Wpisz cenę zakupu, by zobaczyć P&amp;L
-            </div>`
-          }
-        </div>
-
-        <div class="chart-box">
-          <div class="chart-hdr">
-            <div class="chart-title">Historia cen (PLN)</div>
-            <div class="chart-tabs">
-              <div class="ctab ${chartRange === '24h' ? 'active' : ''}" onclick="setRange('24h')">24h</div>
-              <div class="ctab ${chartRange === '7d' ? 'active' : ''}" onclick="setRange('7d')">7 dni</div>
-              <div class="ctab ${chartRange === '30d' ? 'active' : ''}" onclick="setRange('30d')">30 dni</div>
-            </div>
-          </div>
-          <div class="chart-area">
-            <canvas id="chartCanvas"></canvas>
-          </div>
-        </div>
-
-        <div class="actions-row">
-          <button class="btn ghost sm" onclick="refreshOne('${item.id}')">⟳ Odśwież cenę</button>
-        </div>
-      `;
-    }
-
-    function csPlaceholder() {
-      return `
-        <svg width="64" height="44" viewBox="0 0 64 44" fill="none">
-          <rect x="6" y="15" width="32" height="10" rx="4" fill="#52a5f0" opacity=".5"/>
-          <rect x="38" y="17" width="18" height="5" rx="2" fill="#52a5f0" opacity=".3"/>
-          <rect x="12" y="23" width="8" height="12" rx="2" fill="#1c2640"/>
-          <circle cx="32" cy="20" r="2.5" fill="#f0c040" opacity=".7"/>
-        </svg>
-      `;
-    }
-
-    function setRange(range) {
-      chartRange = range;
-      document.querySelectorAll('.ctab').forEach(t => {
-        const label = t.textContent.trim();
-        const match =
-          (range === '24h' && label === '24h') ||
-          (range === '7d' && label === '7 dni') ||
-          (range === '30d' && label === '30 dni');
-        t.className = 'ctab' + (match ? ' active' : '');
-      });
-      renderChart();
-    }
-
-    function renderChart() {
-      if (chart) {
-        chart.destroy();
-        chart = null;
-      }
-      const canvas = $('chartCanvas');
-      if (!canvas) return;
-
-      const cutoffs = {
-        '24h': Date.now() - 86400000,
-        '7d': Date.now() - 7 * 86400000,
-        '30d': Date.now() - 30 * 86400000
-      };
-      const filtered = fullHistory.filter(h => h.ts >= (cutoffs[chartRange] || 0));
-
-      if (!filtered.length) {
-        const ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#5a7090';
-        ctx.font = '13px Barlow,sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(
-          'Brak danych dla tego okresu — ceny gromadzone co 1h',
-          canvas.width / 2,
-          90
-        );
-        return;
-      }
-
-      const labels = filtered.map(h => {
-        const d = new Date(h.ts);
-        return chartRange === '24h'
-          ? d.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })
-          : d.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit' });
-      });
-
-      chart = new Chart(canvas, {
-        type: 'line',
-        data: {
-          labels,
-          datasets: [
-            {
-              label: 'Cena min.',
-              data: filtered.map(h => +(h.lowest || 0).toFixed(2)),
-              borderColor: '#52a5f0',
-              backgroundColor: 'rgba(82,165,240,0.06)',
-              borderWidth: 1.5,
-              pointRadius: filtered.length > 60 ? 0 : 2,
-              pointHoverRadius: 4,
-              pointHoverBackgroundColor: '#f0c040',
-              fill: true,
-              tension: 0.3
-            },
-            {
-              label: 'Mediana',
-              data: filtered.map(h => +(h.median || 0).toFixed(2)),
-              borderColor: 'rgba(240,192,64,0.45)',
-              borderWidth: 1,
-              borderDash: [4, 3],
-              pointRadius: 0,
-              fill: false,
-              tension: 0.3
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          interaction: {
-            mode: 'index',
-            intersect: false
-          },
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              backgroundColor: '#1c2640',
-              borderColor: 'rgba(82,165,240,.3)',
-              borderWidth: 1,
-              titleColor: '#8099b8',
-              bodyColor: '#d8e4f4',
-              callbacks: {
-                label: c =>
-                  ' ' +
-                  c.dataset.label +
-                  ': ' +
-                  c.parsed.y.toLocaleString('pl-PL', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                  }) +
-                  ' zł'
-              }
-            }
-          },
-          scales: {
-            x: {
-              grid: { color: 'rgba(82,165,240,.05)' },
-              ticks: {
-                color: '#5a7090',
-                font: { size: 10 },
-                maxTicksLimit: 10,
-                autoSkip: true
-              }
-            },
-            y: {
-              grid: { color: 'rgba(82,165,240,.07)' },
-              ticks: {
-                color: '#5a7090',
-                font: { size: 10 },
-                callback: v =>
-                  v.toLocaleString('pl-PL', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                  }) + ' zł'
-              }
-            }
-          }
-        }
-      });
-    }
-
-    function updateDayChange() {
-      const el = $('dayChgRow');
-      if (!el || fullHistory.length < 2) {
-        if (el) el.textContent = 'Za mało danych';
-        return;
-      }
-      const last = fullHistory[fullHistory.length - 1];
-      const prev =
-        fullHistory.find(h => h.ts >= Date.now() - 86400000) || fullHistory[0];
-      if (!last.lowest || !prev.lowest) return;
-      const pct = ((last.lowest - prev.lowest) / prev.lowest) * 100;
-      const cls = pct > 0.3 ? 'up' : pct < -0.3 ? 'dn' : 'nu';
-      const arrow = pct > 0.3 ? '▲' : pct < -0.3 ? '▼' : '—';
-      el.className = 'price-chg ' + cls;
-      el.textContent = `${arrow} ${Math.abs(pct).toFixed(2)}% (24h)`;
-    }
-
-    async function refreshOne(id) {
-      const btn = event.target;
-      btn.disabled = true;
-      btn.textContent = '⟳ Pobieranie...';
-      try {
-        const r = await fetch(`${API}/refresh/${id}`, {
-  method: 'POST',
-  headers: authHeaders()
-});
-        if (!r.ok) throw new Error();
-        toast('Cena zaktualizowana ✓', 'ok');
-        await loadWatchlist();
-        const item = items.find(w => w.id === id);
-        if (item && activeId === id) {
-          renderMain(item);
-          const hr = await fetch(`${API}/history/${id}`, {
-  headers: authHeaders()
-});
-          fullHistory = await hr.json();
-          renderChart();
-          updateDayChange();
-        }
-      } catch {
-        toast('Błąd pobierania ceny ze Steam', 'err');
-      }
-      btn.disabled = false;
-      btn.textContent = '⟳ Odśwież cenę';
-    }
-
-    async function refreshAll() {
-      const btn = $('rafBtn');
-      btn.disabled = true;
-      btn.textContent = '⟳ Odświeżam...';
-      $('rafNote').textContent = 'Trwa odświeżanie (~3s/szt.)...';
-      try {
-        await fetch(`${API}/refresh-all`, {
-  method: 'POST',
-  headers: authHeaders()
-});
-        toast('Odświeżanie uruchomione w tle', 'ok');
-        const wait = items.length * 4000 + 3000;
-        setTimeout(async () => {
-          await loadWatchlist();
-          if (activeId) {
-            const item = items.find(w => w.id === activeId);
-            if (item) {
-              renderMain(item);
-             const hr = await fetch(`${API}/history/${activeId}`, {
-  headers: authHeaders()
-});
-
-              fullHistory = await hr.json();
-              renderChart();
-              updateDayChange();
-            }
-          }
-          $('rafNote').textContent =
-            'Zaktualizowano: ' + new Date().toLocaleTimeString('pl-PL');
-        }, wait);
-      } catch {
-        toast('Błąd połączenia z backendem', 'err');
-      }
-      setTimeout(() => {
-        btn.disabled = false;
-        btn.textContent = '⟳ Odśwież wszystko';
-      }, 3000);
-    }
-
-    async function saveBuy(id) {
-      const val = parseFloat($('buyInp').value) || null;
-      try {
-        const r = await fetch(`${API}/watchlist/${id}`, {
-  method: 'PATCH',
-  headers: authHeaders(true),
-  body: JSON.stringify({ buyPrice: val })
-});
-
-        const updated = await r.json();
-        const idx = items.findIndex(w => w.id === id);
-        if (idx !== -1) items[idx] = updated;
-        renderSidebar();
-        renderMain(updated);
-        toast('Cena zakupu zapisana ✓', 'ok');
-      } catch {
-        toast('Błąd zapisu', 'err');
-      }
-    }
-
-    async function deleteItem(e, id) {
-      e.stopPropagation();
-      if (!confirm('Usunąć ten przedmiot z obserwowanych?')) return;
-      try {
-        await fetch(`${API}/watchlist/${id}`, {
-  method: 'DELETE',
-  headers: authHeaders()
-});
-
-        if (activeId === id) {
-          activeId = null;
-          $('main').innerHTML = `
-            <div class="empty-state">
-              <div class="empty-icon">🎯</div>
-              <div class="empty-title">Brak wybranego przedmiotu</div>
-              <div style="font-size:13px">Dodaj skórki z listy po lewej</div>
-              <button class="btn" style="margin-top:14px" onclick="openModal()">
-                + Dodaj przedmiot
-              </button>
-            </div>
-          `;
-        }
-        toast('Usunięto', 'ok');
-        await loadWatchlist();
-      } catch {
-        toast('Błąd usuwania', 'err');
-      }
-    }
-
-    function openModal() {
-      mSelected = null;
-      $('mSearch').value = '';
-      $('mBuy').value = '';
-      $('mResults').className = 'msearch-results';
-      $('mResults').innerHTML = '';
-      $('mSelRow').style.display = 'none';
-      $('mAddBtn').disabled = true;
-      $('modal').classList.add('show');
-      setTimeout(() => $('mSearch').focus(), 80);
-    }
-
-    function closeModal() {
-      $('modal').classList.remove('show');
-    }
-
-    $('modal').addEventListener('click', e => {
-      if (e.target === $('modal')) closeModal();
-    });
-
-    $('mSearch').addEventListener('input', e => {
-      clearTimeout(mSearchT);
-      const q = e.target.value.trim();
-      if (q.length < 3) {
-        $('mResults').className = 'msearch-results';
-        return;
-      }
-      mSearchT = setTimeout(() => doModalSearch(q), 450);
-    });
-
-    async function doModalSearch(q) {
-      const el = $('mResults');
-      el.className = 'msearch-results show';
-      el.innerHTML =
-        '<div style="padding:12px;text-align:center;color:var(--muted);font-size:12px">' +
-        '<span class="spin"></span> Szukam na Steam...' +
-        '</div>';
-      try {
-        const r = await fetch(`${API}/search?q=${encodeURIComponent(q)}`, {
-  headers: authHeaders()
-});
-
-        const results = await r.json();
-        if (!results.length) {
-          el.innerHTML =
-            '<div style="padding:12px;text-align:center;color:var(--muted);font-size:12px">' +
-            'Brak wyników dla tej frazy' +
-            '</div>';
-          return;
-        }
-        el.innerHTML = results
-          .slice(0, 8)
-          .map(item => {
-            const json = JSON.stringify(item).replace(/"/g, '&quot;');
-            return `
-              <div class="msr-item" onclick="pickItem(&quot;${json}&quot;)">
-                ${
-                  item.imageUrl
-                    ? `<img src="${item.imageUrl}" alt=""/>`
-                    : '<div style="width:44px;height:32px"></div>'
-                }
-                <div class="msr-name">${item.name}</div>
-                <div class="msr-price">${item.price || '—'}</div>
-              </div>`;
-          })
-          .join('');
-      } catch {
-        el.innerHTML =
-          '<div style="padding:12px;text-align:center;color:var(--red);font-size:12px">' +
-          'Błąd połączenia z backendem' +
-          '</div>';
-      }
-    }
-
-    function pickItem(json) {
-      mSelected = JSON.parse(json);
-      $('mSelName').textContent = mSelected.name;
-      $('mSelRow').style.display = 'block';
-      $('mResults').className = 'msearch-results';
-      $('mSearch').value = mSelected.name;
-      $('mAddBtn').disabled = false;
-    }
-
-    async function addItem() {
-      if (!mSelected) return;
-      const buyPrice = parseFloat($('mBuy').value) || null;
-      const btn = $('mAddBtn');
-      btn.disabled = true;
-      btn.textContent = 'Dodawanie...';
-      try {
- const r = await fetch(`${API}/watchlist`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json', ...authHeaders() },
-  body: JSON.stringify({
-    name: mSelected.name,
-    marketHashName: mSelected.marketHashName,
-    buyPrice,
-    imageUrl: mSelected.imageUrl
-  })
-});
-        if (r.status === 409) {
-          toast('Ten przedmiot już jest na liście', 'err');
-          return;
-        }
-        if (!r.ok) throw new Error();
-        const item = await r.json();
-        toast(`Dodano: ${item.name}`, 'ok');
-        closeModal();
-        await loadWatchlist();
-        selectItem(item.id);
-      } catch {
-        toast('Błąd dodawania — sprawdź połączenie', 'err');
-      }
-      btn.disabled = false;
-      btn.textContent = 'Dodaj do obserwowanych';
-    }
-
-    $('searchInput').addEventListener('input', e => {
-      clearTimeout(topSearchT);
-      const q = e.target.value.trim();
-      const dd = $('searchDrop');
-      if (q.length < 3) {
-        dd.classList.remove('show');
-        return;
-      }
-      topSearchT = setTimeout(async () => {
-        dd.classList.add('show');
-        dd.innerHTML =
-          '<div class="search-hint"><span class="spin"></span> Szukam...</div>';
-        try {
-          const r = await fetch(`${API}/search?q=${encodeURIComponent(q)}`, {
-  headers: authHeaders()
-});
-
-          const res = await r.json();
-          if (!res.length) {
-            dd.innerHTML =
-              '<div class="search-hint">Brak wyników</div>';
-            return;
-          }
-          dd.innerHTML = res
-            .slice(0, 6)
-            .map(item => {
-              const json = JSON.stringify(item).replace(/"/g, '&quot;');
-              return `
-                <div class="sdrop-item" onclick="quickPick(&quot;${json}&quot;)">
-                  ${
-                    item.imageUrl
-                      ? `<img src="${item.imageUrl}" alt=""/>`
-                      : '<div style="width:44px;height:32px"></div>'
-                  }
-                  <div class="sdrop-name">${item.name}</div>
-                  <div class="sdrop-price">${item.price || '—'}</div>
-                  <div class="sdrop-add">+ Dodaj</div>
-                </div>`;
-            })
-            .join('');
-        } catch {
-          dd.innerHTML =
-            '<div class="search-hint" style="color:var(--red)">Backend offline</div>';
-        }
-      }, 400);
-    });
-
-    document.addEventListener('click', e => {
-      if (!e.target.closest('.search-wrap')) {
-        $('searchDrop').classList.remove('show');
-      }
-    });
-
-    function quickPick(json) {
-      mSelected = JSON.parse(json);
-      $('searchDrop').classList.remove('show');
-      $('searchInput').value = '';
-      $('mSearch').value = mSelected.name;
-      $('mSelName').textContent = mSelected.name;
-      $('mSelRow').style.display = 'block';
-      $('mAddBtn').disabled = false;
-      $('modal').classList.add('show');
-    }
-
-    // DODANE: LOGOWANIE
-
-    function openAuthModal() {
-      $('auth-email').value = '';
-      $('auth-password').value = '';
-      $('auth-modal').classList.add('show');
-      setTimeout(() => $('auth-email').focus(), 80);
-    }
-
-    function closeAuthModal() {
-      $('auth-modal').classList.remove('show');
-    }
-
-    $('auth-modal').addEventListener('click', e => {
-      if (e.target === $('auth-modal')) closeAuthModal();
-    });
-
-    async function login() {
-      const email = $('auth-email').value.trim();
-      const password = $('auth-password').value;
-
-      if (!email || !password) {
-        toast('Podaj email i hasło', 'err');
-        return;
-      }
-
-      try {
-       const res = await fetch(`${API}/login`, {
-  method: 'POST',
-  headers: authHeaders(true),
-  body: JSON.stringify({ email, password })
-});
-
-
-        if (!res.ok) {
-          toast('Błędne dane logowania', 'err');
-          return;
-        }
-
-        const data = await res.json();
-        if (data.token) {
-          localStorage.setItem('token', data.token);
-        }
-
-        toast('Zalogowano ✓', 'ok');
-        closeAuthModal();
-      } catch {
-        toast('Błąd połączenia przy logowaniu', 'err');
-      }
-    }
-    function openRegisterModal() {
-  $('reg-email').value = '';
-  $('reg-password').value = '';
-  $('reg-password2').value = '';
-  $('register-modal').classList.add('show');
-  setTimeout(() => $('reg-email').focus(), 80);
-}
-
-function closeRegisterModal() {
-  $('register-modal').classList.remove('show');
-}
-
-$('register-modal').addEventListener('click', e => {
-  if (e.target === $('register-modal')) closeRegisterModal();
-});
-
-async function registerUser() {
-  const email = $('reg-email').value.trim();
-  const pass1 = $('reg-password').value;
-  const pass2 = $('reg-password2').value;
-
-  if (!email || !pass1 || !pass2) {
-    toast('Wypełnij wszystkie pola', 'err');
-    return;
+    } catch (e) { console.error(e); }
   }
 
-  if (pass1 !== pass2) {
-    toast('Hasła nie są takie same', 'err');
-    return;
+  function renderMain(item) {
+    const wk = wearKey(item.name);
+    const pct = item.currentPrice && item.buyPrice
+      ? ((item.currentPrice - item.buyPrice) / item.buyPrice) * 100 : null;
+    const pnlAbs = pct != null ? item.currentPrice - item.buyPrice : null;
+    const cls = pct != null ? (pct > 0.3 ? 'up' : pct < -0.3 ? 'dn' : 'nu') : 'nu';
+    const arrow = pct != null ? (pct > 0.3 ? '▲ ' : pct < -0.3 ? '▼ ' : '') : '';
+
+    $('main').innerHTML = `
+      <div class="item-header">
+        <div class="item-img">
+          ${item.imageUrl
+            ? `<img src="${item.imageUrl}" alt="" onerror="this.style.display='none'"/>`
+            : csPlaceholder()}
+        </div>
+        <div class="item-info">
+          <div class="item-name">${item.name}</div>
+          <div class="item-meta">
+            ${wk ? `<span class="tag ${wk}">${WEAR_NAME[wk]}</span>&nbsp;` : ''}CS2 · Steam Market
+          </div>
+        </div>
+        <div class="price-block">
+          <div class="price-main">${fmt(item.currentPrice)}</div>
+          <div class="price-chg nu" id="dayChgRow">Ładowanie historii...</div>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat">
+          <div class="stat-lbl">Cena minimalna</div>
+          <div class="stat-val" style="color:var(--gold)">${fmt(item.currentPrice)}</div>
+        </div>
+        <div class="stat">
+          <div class="stat-lbl">Mediana 24h</div>
+          <div class="stat-val">${fmt(item.currentMedian)}</div>
+        </div>
+        <div class="stat">
+          <div class="stat-lbl">Wolumen 24h</div>
+          <div class="stat-val">${(item.currentVolume || 0).toLocaleString('pl-PL')}</div>
+        </div>
+        <div class="stat">
+          <div class="stat-lbl">Aktualizacja</div>
+          <div class="stat-val" style="font-size:13px;color:var(--muted2)">${timeAgo(item.lastUpdated)}</div>
+        </div>
+      </div>
+
+      <div class="pbox">
+        <div class="pbox-hdr">
+          <div class="pbox-title">Mój zakup &amp; P&amp;L</div>
+          <button class="btn sm gold" onclick="saveBuy('${item.id}')">Zapisz</button>
+        </div>
+        <div class="pform">
+          <div class="fg">
+            <div class="fg-lbl">Cena zakupu (PLN)</div>
+            <input class="fg-inp" type="number" id="buyInp" value="${item.buyPrice || ''}" placeholder="np. 12,50" step="0.01" min="0" />
+          </div>
+          <div style="color:var(--muted);font-size:22px;padding-bottom:8px">→</div>
+          <div class="fg" style="flex:1">
+            <div class="fg-lbl">Aktualna cena</div>
+            <div class="fg-inp" style="cursor:default;color:var(--gold)">${fmt(item.currentPrice)}</div>
+          </div>
+        </div>
+        ${pct != null ? `
+          <div class="pnl-row">
+            <div class="pnl-item">
+              <div class="pnl-lbl">Zysk / Strata</div>
+              <div class="pnl-val ${cls}">${arrow}${fmt(Math.abs(pnlAbs))}</div>
+            </div>
+            <div class="pnl-item">
+              <div class="pnl-lbl">Zmiana %</div>
+              <div class="pnl-val ${cls}">${fmtPct(pct)}</div>
+            </div>
+            <div class="pnl-item">
+              <div class="pnl-lbl">Status</div>
+              <div class="pnl-val ${cls}">
+                ${pct > 0.3 ? '📈 Zysk' : pct < -0.3 ? '📉 Strata' : '➖ Bez zmian'}
+              </div>
+            </div>
+          </div>` : `
+          <div style="font-size:12px;color:var(--muted);margin-top:10px">
+            Wpisz cenę zakupu, by zobaczyć P&amp;L
+          </div>`}
+      </div>
+
+      <div class="chart-box">
+        <div class="chart-hdr">
+          <div class="chart-title">Historia cen (PLN)</div>
+          <div class="chart-tabs">
+            <div class="ctab ${chartRange === '24h' ? 'active' : ''}" onclick="setRange('24h')">24h</div>
+            <div class="ctab ${chartRange === '7d' ? 'active' : ''}" onclick="setRange('7d')">7 dni</div>
+            <div class="ctab ${chartRange === '30d' ? 'active' : ''}" onclick="setRange('30d')">30 dni</div>
+          </div>
+        </div>
+        <div class="chart-area"><canvas id="chartCanvas"></canvas></div>
+      </div>
+
+      <div class="actions-row">
+        <button class="btn ghost sm" onclick="refreshOne('${item.id}')">⟳ Odśwież cenę</button>
+      </div>`;
   }
 
-  try {
-const res = await fetch('/api/register', {
-  method: 'POST',
-  headers: authHeaders(true),
-  body: JSON.stringify({ email, password: pass1 })
-});
+  function csPlaceholder() {
+    return `<svg width="64" height="44" viewBox="0 0 64 44" fill="none">
+      <rect x="6" y="15" width="32" height="10" rx="4" fill="#52a5f0" opacity=".5"/>
+      <rect x="38" y="17" width="18" height="5" rx="2" fill="#52a5f0" opacity=".3"/>
+      <rect x="12" y="23" width="8" height="12" rx="2" fill="#1c2640"/>
+      <circle cx="32" cy="20" r="2.5" fill="#f0c040" opacity=".7"/>
+    </svg>`;
+  }
 
+  function setRange(range) {
+    chartRange = range;
+    document.querySelectorAll('.ctab').forEach(t => {
+      const label = t.textContent.trim();
+      const match = (range === '24h' && label === '24h') ||
+                    (range === '7d' && label === '7 dni') ||
+                    (range === '30d' && label === '30 dni');
+      t.className = 'ctab' + (match ? ' active' : '');
+    });
+    renderChart();
+  }
 
-    if (!res.ok) {
-      toast('Nie udało się utworzyć konta', 'err');
+  function renderChart() {
+    if (chart) { chart.destroy(); chart = null; }
+    const canvas = $('chartCanvas');
+    if (!canvas) return;
+    const cutoffs = { '24h': Date.now() - 86400000, '7d': Date.now() - 7 * 86400000, '30d': Date.now() - 30 * 86400000 };
+    const filtered = fullHistory.filter(h => h.ts >= (cutoffs[chartRange] || 0));
+    if (!filtered.length) {
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#5a7090'; ctx.font = '13px Barlow,sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('Brak danych dla tego okresu — ceny gromadzone co 1h', canvas.width / 2, 90);
       return;
     }
-
-    toast('Konto utworzone ✓', 'ok');
-    closeRegisterModal();
-    openAuthModal(); // od razu otwieramy logowanie
-  } catch {
-    toast('Błąd połączenia', 'err');
+    const labels = filtered.map(h => {
+      const d = new Date(h.ts);
+      return chartRange === '24h'
+        ? d.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })
+        : d.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit' });
+    });
+    chart = new Chart(canvas, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Cena min.',
+            data: filtered.map(h => +(h.lowest || 0).toFixed(2)),
+            borderColor: '#52a5f0', backgroundColor: 'rgba(82,165,240,0.06)',
+            borderWidth: 1.5, pointRadius: filtered.length > 60 ? 0 : 2,
+            pointHoverRadius: 4, pointHoverBackgroundColor: '#f0c040',
+            fill: true, tension: 0.3
+          },
+          {
+            label: 'Mediana',
+            data: filtered.map(h => +(h.median || 0).toFixed(2)),
+            borderColor: 'rgba(240,192,64,0.45)', borderWidth: 1,
+            borderDash: [4, 3], pointRadius: 0, fill: false, tension: 0.3
+          }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#1c2640', borderColor: 'rgba(82,165,240,.3)', borderWidth: 1,
+            titleColor: '#8099b8', bodyColor: '#d8e4f4',
+            callbacks: { label: c => ' ' + c.dataset.label + ': ' + c.parsed.y.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' zł' }
+          }
+        },
+        scales: {
+          x: { grid: { color: 'rgba(82,165,240,.05)' }, ticks: { color: '#5a7090', font: { size: 10 }, maxTicksLimit: 10, autoSkip: true } },
+          y: { grid: { color: 'rgba(82,165,240,.07)' }, ticks: { color: '#5a7090', font: { size: 10 }, callback: v => v.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' zł' } }
+        }
+      }
+    });
   }
-}
 
-    // init
-    checkStatus();
-    loadWatchlist();
-    setInterval(checkStatus, 30000);
-    setInterval(loadWatchlist, 300000);
-  </script>
+  function updateDayChange() {
+    const el = $('dayChgRow');
+    if (!el || fullHistory.length < 2) { if (el) el.textContent = 'Za mało danych'; return; }
+    const last = fullHistory[fullHistory.length - 1];
+    const prev = fullHistory.find(h => h.ts >= Date.now() - 86400000) || fullHistory[0];
+    if (!last.lowest || !prev.lowest) return;
+    const pct = ((last.lowest - prev.lowest) / prev.lowest) * 100;
+    const cls = pct > 0.3 ? 'up' : pct < -0.3 ? 'dn' : 'nu';
+    const arrow = pct > 0.3 ? '▲' : pct < -0.3 ? '▼' : '—';
+    el.className = 'price-chg ' + cls;
+    el.textContent = `${arrow} ${Math.abs(pct).toFixed(2)}% (24h)`;
+  }
+
+  async function refreshOne(id) {
+    const btn = event.target;
+    btn.disabled = true; btn.textContent = '⟳ Pobieranie...';
+    try {
+      const r = await fetch(`${API}/refresh/${id}`, { method: 'POST', headers: authHeaders() });
+      if (!r.ok) throw new Error();
+      toast('Cena zaktualizowana ✓', 'ok');
+      await loadWatchlist();
+      const item = items.find(w => w.id === id);
+      if (item && activeId === id) {
+        renderMain(item);
+        const hr = await fetch(`${API}/history/${id}`, { headers: authHeaders() });
+        fullHistory = await hr.json();
+        renderChart(); updateDayChange();
+      }
+    } catch { toast('Błąd pobierania ceny ze Steam', 'err'); }
+    btn.disabled = false; btn.textContent = '⟳ Odśwież cenę';
+  }
+
+  async function refreshAll() {
+    const btn = $('rafBtn');
+    btn.disabled = true; btn.textContent = '⟳ Odświeżam...';
+    $('rafNote').textContent = 'Trwa odświeżanie (~3s/szt.)...';
+    try {
+      await fetch(`${API}/refresh-all`, { method: 'POST', headers: authHeaders() });
+      toast('Odświeżanie uruchomione w tle', 'ok');
+      const wait = items.length * 4000 + 3000;
+      setTimeout(async () => {
+        await loadWatchlist();
+        if (activeId) {
+          const item = items.find(w => w.id === activeId);
+          if (item) {
+            renderMain(item);
+            const hr = await fetch(`${API}/history/${activeId}`, { headers: authHeaders() });
+            fullHistory = await hr.json();
+            renderChart(); updateDayChange();
+          }
+        }
+        $('rafNote').textContent = 'Zaktualizowano: ' + new Date().toLocaleTimeString('pl-PL');
+      }, wait);
+    } catch { toast('Błąd połączenia z backendem', 'err'); }
+    setTimeout(() => { btn.disabled = false; btn.textContent = '⟳ Odśwież wszystko'; }, 3000);
+  }
+
+  async function saveBuy(id) {
+    const val = parseFloat($('buyInp').value) || null;
+    try {
+      const r = await fetch(`${API}/watchlist/${id}`, {
+        method: 'PATCH', headers: authHeaders(true),
+        body: JSON.stringify({ buyPrice: val })
+      });
+      const updated = await r.json();
+      const idx = items.findIndex(w => w.id === id);
+      if (idx !== -1) items[idx] = updated;
+      renderSidebar(); renderMain(updated);
+      toast('Cena zakupu zapisana ✓', 'ok');
+    } catch { toast('Błąd zapisu', 'err'); }
+  }
+
+  async function deleteItem(e, id) {
+    e.stopPropagation();
+    if (!confirm('Usunąć ten przedmiot z obserwowanych?')) return;
+    try {
+      await fetch(`${API}/watchlist/${id}`, { method: 'DELETE', headers: authHeaders() });
+      if (activeId === id) {
+        activeId = null;
+        $('main').innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">🎯</div>
+            <div class="empty-title">Brak wybranego przedmiotu</div>
+            <div style="font-size:13px">Dodaj skórki z listy po lewej</div>
+            <button class="btn" style="margin-top:14px" onclick="openModal()">+ Dodaj przedmiot</button>
+          </div>`;
+      }
+      toast('Usunięto', 'ok');
+      await loadWatchlist();
+    } catch { toast('Błąd usuwania', 'err'); }
+  }
+
+  // ── MODAL: dodaj ──
+  function openModal() {
+    if (!isLoggedIn()) { openAuthModal(); return; }
+    mSelected = null;
+    $('mSearch').value = ''; $('mBuy').value = '';
+    $('mResults').className = 'msearch-results'; $('mResults').innerHTML = '';
+    $('mSelRow').style.display = 'none'; $('mAddBtn').disabled = true;
+    $('modal').classList.add('show');
+    setTimeout(() => $('mSearch').focus(), 80);
+  }
+
+  function closeModal() { $('modal').classList.remove('show'); }
+  $('modal').addEventListener('click', e => { if (e.target === $('modal')) closeModal(); });
+
+  $('mSearch').addEventListener('input', e => {
+    clearTimeout(mSearchT);
+    const q = e.target.value.trim();
+    if (q.length < 3) { $('mResults').className = 'msearch-results'; return; }
+    mSearchT = setTimeout(() => doModalSearch(q), 450);
+  });
+
+  async function doModalSearch(q) {
+    const el = $('mResults');
+    el.className = 'msearch-results show';
+    el.innerHTML = '<div style="padding:12px;text-align:center;color:var(--muted);font-size:12px"><span class="spin"></span> Szukam na Steam...</div>';
+    try {
+      const r = await fetch(`${API}/search?q=${encodeURIComponent(q)}`, { headers: authHeaders() });
+      const results = await r.json();
+      if (!results.length) {
+        el.innerHTML = '<div style="padding:12px;text-align:center;color:var(--muted);font-size:12px">Brak wyników dla tej frazy</div>';
+        return;
+      }
+      // Użyj searchCache zamiast JSON w onclick (fix dla ★ i innych znaków specjalnych)
+      el.innerHTML = results.slice(0, 8).map((item, i) => {
+        const key = 'modal_' + i;
+        searchCache[key] = item;
+        return `
+          <div class="msr-item" onclick="pickItem('${key}')">
+            ${item.imageUrl ? `<img src="${item.imageUrl}" alt=""/>` : '<div style="width:44px;height:32px"></div>'}
+            <div class="msr-name">${item.name}</div>
+            <div class="msr-price">${item.price != null ? fmt(item.price) : '—'}</div>
+          </div>`;
+      }).join('');
+    } catch {
+      el.innerHTML = '<div style="padding:12px;text-align:center;color:var(--red);font-size:12px">Błąd połączenia z backendem</div>';
+    }
+  }
+
+  function pickItem(key) {
+    mSelected = searchCache[key];
+    if (!mSelected) return;
+    $('mSelName').textContent = mSelected.name;
+    $('mSelRow').style.display = 'block';
+    $('mResults').className = 'msearch-results';
+    $('mSearch').value = mSelected.name;
+    $('mAddBtn').disabled = false;
+  }
+
+  async function addItem() {
+    if (!mSelected) return;
+    const buyPrice = parseFloat($('mBuy').value) || null;
+    const btn = $('mAddBtn');
+    btn.disabled = true; btn.textContent = 'Dodawanie...';
+    try {
+      const r = await fetch(`${API}/watchlist`, {
+        method: 'POST',
+        headers: authHeaders(true),
+        body: JSON.stringify({
+          name: mSelected.name,
+          marketHashName: mSelected.marketHashName,
+          buyPrice,
+          imageUrl: mSelected.imageUrl
+        })
+      });
+      if (r.status === 409) { toast('Ten przedmiot już jest na liście', 'err'); return; }
+      if (!r.ok) throw new Error();
+      const item = await r.json();
+      toast(`Dodano: ${item.name}`, 'ok');
+      closeModal();
+      await loadWatchlist();
+      selectItem(item.id);
+    } catch { toast('Błąd dodawania — sprawdź połączenie', 'err'); }
+    btn.disabled = false; btn.textContent = 'Dodaj do obserwowanych';
+  }
+
+  // ── TOP SEARCH ──
+  $('searchInput').addEventListener('input', e => {
+    clearTimeout(topSearchT);
+    const q = e.target.value.trim();
+    const dd = $('searchDrop');
+    if (q.length < 3) { dd.classList.remove('show'); return; }
+    topSearchT = setTimeout(async () => {
+      dd.classList.add('show');
+      dd.innerHTML = '<div class="search-hint"><span class="spin"></span> Szukam...</div>';
+      try {
+        const r = await fetch(`${API}/search?q=${encodeURIComponent(q)}`, { headers: authHeaders() });
+        const res = await r.json();
+        if (!res.length) { dd.innerHTML = '<div class="search-hint">Brak wyników</div>'; return; }
+        // Użyj searchCache zamiast JSON w onclick
+        dd.innerHTML = res.slice(0, 6).map((item, i) => {
+          const key = 'top_' + i;
+          searchCache[key] = item;
+          return `
+            <div class="sdrop-item" onclick="quickPick('${key}')">
+              ${item.imageUrl ? `<img src="${item.imageUrl}" alt=""/>` : '<div style="width:44px;height:32px"></div>'}
+              <div class="sdrop-name">${item.name}</div>
+              <div class="sdrop-price">${item.price != null ? fmt(item.price) : '—'}</div>
+              <div class="sdrop-add">+ Dodaj</div>
+            </div>`;
+        }).join('');
+      } catch { dd.innerHTML = '<div class="search-hint" style="color:var(--red)">Backend offline</div>'; }
+    }, 400);
+  });
+
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.search-wrap')) $('searchDrop').classList.remove('show');
+  });
+
+  // Kliknięcie "+ Dodaj" w top search — otwiera modal z już wybranym itemem
+  function quickPick(key) {
+    mSelected = searchCache[key];
+    if (!mSelected) return;
+    $('searchDrop').classList.remove('show');
+    $('searchInput').value = '';
+    if (!isLoggedIn()) { openAuthModal(); return; }
+    $('mSearch').value = mSelected.name;
+    $('mSelName').textContent = mSelected.name;
+    $('mSelRow').style.display = 'block';
+    $('mAddBtn').disabled = false;
+    $('modal').classList.add('show');
+  }
+
+  // ── AUTH: logowanie ──
+  function openAuthModal() {
+    $('auth-email').value = ''; $('auth-password').value = '';
+    $('auth-modal').classList.add('show');
+    setTimeout(() => $('auth-email').focus(), 80);
+  }
+  function closeAuthModal() { $('auth-modal').classList.remove('show'); }
+  $('auth-modal').addEventListener('click', e => { if (e.target === $('auth-modal')) closeAuthModal(); });
+
+  function switchToRegister() { closeAuthModal(); openRegisterModal(); }
+
+  async function login() {
+    const email = $('auth-email').value.trim();
+    const password = $('auth-password').value;
+    if (!email || !password) { toast('Podaj email i hasło', 'err'); return; }
+    try {
+      const res = await fetch(`${API}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      if (!res.ok) { toast('Błędne dane logowania', 'err'); return; }
+      const data = await res.json();
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('userEmail', email);
+      }
+      toast('Zalogowano ✓', 'ok');
+      closeAuthModal();
+      updateAuthUI();
+      loadWatchlist();
+    } catch { toast('Błąd połączenia przy logowaniu', 'err'); }
+  }
+
+  // ── AUTH: rejestracja ──
+  function openRegisterModal() {
+    $('reg-email').value = ''; $('reg-password').value = ''; $('reg-password2').value = '';
+    $('register-modal').classList.add('show');
+    setTimeout(() => $('reg-email').focus(), 80);
+  }
+  function closeRegisterModal() { $('register-modal').classList.remove('show'); }
+  $('register-modal').addEventListener('click', e => { if (e.target === $('register-modal')) closeRegisterModal(); });
+
+  async function registerUser() {
+    const email = $('reg-email').value.trim();
+    const pass1 = $('reg-password').value;
+    const pass2 = $('reg-password2').value;
+    if (!email || !pass1 || !pass2) { toast('Wypełnij wszystkie pola', 'err'); return; }
+    if (pass1 !== pass2) { toast('Hasła nie są takie same', 'err'); return; }
+    try {
+      const res = await fetch(`${API}/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: pass1 })
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        toast(err.error === 'email_exists' ? 'Ten email już istnieje' : 'Nie udało się utworzyć konta', 'err');
+        return;
+      }
+      const data = await res.json();
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('userEmail', email);
+      }
+      toast('Konto utworzone i zalogowano ✓', 'ok');
+      closeRegisterModal();
+      updateAuthUI();
+      loadWatchlist();
+    } catch { toast('Błąd połączenia', 'err'); }
+  }
+
+  // ── STATUS ──
+  async function checkStatus() {
+    try {
+      const r = await fetch(API + '/health', { signal: AbortSignal.timeout(4000) });
+      if (r.ok) { $('sDot').className = 'dot'; $('sTxt').textContent = 'Backend online'; }
+      else throw new Error();
+    } catch { $('sDot').className = 'dot off'; $('sTxt').textContent = 'Backend offline'; }
+  }
+
+  // ── ENTER w polach logowania / rejestracji ──
+  $('auth-password').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+  $('auth-email').addEventListener('keydown', e => { if (e.key === 'Enter') $('auth-password').focus(); });
+  $('reg-password2').addEventListener('keydown', e => { if (e.key === 'Enter') registerUser(); });
+
+  // ── INIT ──
+  checkStatus();
+  updateAuthUI();
+  loadWatchlist();
+  setInterval(checkStatus, 30000);
+  setInterval(loadWatchlist, 300000);
+</script>
 </body>
 </html>
