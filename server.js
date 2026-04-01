@@ -182,13 +182,13 @@ app.post('/api/refresh-all', (req, res) => {
 });
 
 
-// ✅ POPRAWIONY ENDPOINT WYSZUKIWANIA
+// ✅ POPRAWIONY ENDPOINT WYSZUKIWANIA (działa na Railway)
 app.get('/api/search', async (req, res) => {
   const q = req.query.q;
   if (!q) return res.status(400).json({ error: 'q required' });
 
   try {
-    const url = `https://steamcommunity.com/market/search/render/?query=${encodeURIComponent(q)}&appid=730&search_descriptions=0&sort_column=popular&sort_dir=desc&currency=1&count=10&format=json`;
+    const url = `https://steamcommunity.com/market/search/render/?query=${encodeURIComponent(q)}&appid=730&search_descriptions=0&sort_column=popular&sort_dir=desc&currency=1&count=10&format=json&norender=1`;
 
     const response = await axios.get(url, {
       headers: {
