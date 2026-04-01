@@ -181,7 +181,7 @@ app.post('/api/watchlist', auth, async (req, res) => {
       [req.userId, itemId]
     );
 
-    res.json({ ok: true });
+   res.json({ ok: true, id: itemId, name: name });
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: 'server_error' });
