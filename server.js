@@ -87,8 +87,20 @@ function auth(req, res, next) {
 // ───────────────── Helpers ─────────────────
 function normalizeSteamPrice(str) {
   if (!str) return null;
-  let cleaned = str.replace(/[^\d.,-]/g, '');
-  cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+  // Usuń wszystko poza cyframi, przecinkiem i kropką
+  let cleaned = str.replace(/[^\d.,]/g, '');
+  // Format PLN: "5,38" lub "1 453,00" (spacja jako separator tysięcy)
+  // Format USD: "1.44" lub "1,444.00"
+  // Wykryj format po tym czy przecinek czy kropka jest ostatnim separatorem
+  const lastComma = cleaned.lastIndexOf(',');
+  const lastDot = cleaned.lastIndexOf('.');
+  if (lastComma > lastDot) {
+    // Przecinek jest separatorem dziesiętnym (format EU/PLN): "1 453,00" → "1453.00"
+    cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+  } else if (lastDot > lastComma) {
+    // Kropka jest separatorem dziesiętnym (format US): "1,444.00" → "1444.00"
+    cleaned = cleaned.replace(/,/g, '');
+  }
   const val = parseFloat(cleaned);
   return isNaN(val) ? null : val;
 }
@@ -406,7 +418,7 @@ app.get('/api/search', async (req, res) => {
     const items = response.data.results.map(i => ({
       name: i.name,
       marketHashName: i.hash_name,
-      price: i.sell_price ? i.sell_price / 100 : null,  // sell_price to grosze (integer)
+      price: normalizeSteamPrice(i.sell_price_text || null),  // sell_price_text jest w PLN (currency=6)
       imageUrl: i.asset_description?.icon_url
         ? `https://community.cloudflare.steamstatic.com/economy/image/${i.asset_description.icon_url}/96fx96f`
         : null
