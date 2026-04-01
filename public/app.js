@@ -1,5 +1,8 @@
 const API = "https://cs2tracker-production.up.railway.app";
 
+// ─────────────────────────────────────────────
+//  REJESTRACJA
+// ─────────────────────────────────────────────
 async function register() {
   const email = document.getElementById("auth-email").value;
   const password = document.getElementById("auth-password").value;
@@ -19,6 +22,9 @@ async function register() {
   }
 }
 
+// ─────────────────────────────────────────────
+//  LOGOWANIE
+// ─────────────────────────────────────────────
 async function login() {
   const email = document.getElementById("auth-email").value;
   const password = document.getElementById("auth-password").value;
@@ -37,3 +43,35 @@ async function login() {
     alert("Błędne dane logowania");
   }
 }
+
+// ─────────────────────────────────────────────
+//  WATCHLIST — POBIERANIE
+// ─────────────────────────────────────────────
+async function loadWatchlist() {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/api/watchlist`, {
+    headers: {
+      "Authorization": "Bearer " + token
+    }
+  });
+
+  // Jeśli nie ma tokena → pokaż modal logowania
+  if (res.status === 401) {
+    document.getElementById("auth-modal").style.display = "flex";
+    return;
+  }
+
+  const items = await res.json();
+  console.log("WATCHLIST:", items);
+
+  // TODO: tutaj możesz zrobić renderowanie listy
+  // Na razie tylko wypisujemy do konsoli
+}
+
+// ─────────────────────────────────────────────
+//  AUTO-START
+// ─────────────────────────────────────────────
+window.addEventListener("load", () => {
+  loadWatchlist();
+});
