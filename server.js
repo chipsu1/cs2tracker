@@ -12,6 +12,8 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 const app = express();
+
+// 🔥 KLUCZOWA POPRAWKA DLA RAILWAY
 const PORT = process.env.PORT || 3001;
 
 // ───────────────── PostgreSQL ─────────────────
