@@ -26,7 +26,7 @@ function saveData(data) {
 
 async function fetchSteamPrice(itemName) {
   const encoded = encodeURIComponent(itemName);
-  const url = `https://steamcommunity.com/market/priceoverview/?appid=730&currency=1&market_hash_name=${encoded}`;
+  const url = `https://steamcommunity.com/market/priceoverview/?appid=730&currency=6&market_hash_name=${encoded}`;
   try {
     const response = await axios.get(url, {
       headers: {
@@ -188,7 +188,7 @@ app.get('/api/search', async (req, res) => {
   if (!q) return res.status(400).json({ error: 'q required' });
 
   try {
-    const url = `https://steamcommunity.com/market/search/render/?query=${encodeURIComponent(q)}&appid=730&search_descriptions=0&sort_column=popular&sort_dir=desc&currency=1&count=10&format=json&norender=1`;
+    const url = `https://steamcommunity.com/market/search/render/?query=${encodeURIComponent(q)}&appid=730&search_descriptions=0&sort_column=popular&sort_dir=desc&currency=6&count=10&format=json&norender=1`;
 
     const response = await axios.get(url, {
       headers: {
