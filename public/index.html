@@ -617,7 +617,7 @@
         const cls = pct != null ? (pct > 0.3 ? 'up' : pct < -0.3 ? 'dn' : 'nu') : 'nu';
         const arrow = pct != null ? (pct > 0.3 ? '▲' : pct < -0.3 ? '▼' : '—') : '';
         return `
-          <div class="wcard ${item.id === activeId ? 'active' : ''}" onclick="selectItem('${item.id}')">
+          <div class="wcard ${String(item.id) === String(activeId) ? 'active' : ''}" onclick="selectItem('${item.id}')">
             <div class="wc-name">${item.name}</div>
             <div class="wc-row">
               <span class="wc-price">${fmt(item.currentPrice)}</span>
@@ -635,15 +635,17 @@
     }
 
     async function selectItem(id) {
-      activeId = id;
+      activeId = String(id);
       renderSidebar();
-      const item = items.find(w => w.id === id);
+      const item = items.find(w => String(w.id) === String(id));
       if (!item) return;
       chartRange = '7d';
       renderMain(item);
       const itemId = item.item_id || item.id;
-      const r = await fetch(`${API}/history/${itemId}`, { headers: authHeaders() });
-      fullHistory = await r.json();
+      try {
+        const r = await fetch(`${API}/history/${itemId}`, { headers: authHeaders() });
+        fullHistory = await r.json();
+      } catch { fullHistory = []; }
       renderChart();
       updateDayChange();
     }
@@ -862,11 +864,13 @@
         if (!r.ok) throw new Error();
         toast('Cena zaktualizowana ✓', 'ok');
         await loadWatchlist();
-        const item = items.find(w => w.id === activeId);
+        const item = items.find(w => String(w.id) === String(activeId));
         if (item) {
           renderMain(item);
-          const hr = await fetch(`${API}/history/${item.item_id || item.id}`, { headers: authHeaders() });
-          fullHistory = await hr.json();
+          try {
+            const hr = await fetch(`${API}/history/${item.item_id || item.id}`, { headers: authHeaders() });
+            fullHistory = await hr.json();
+          } catch { fullHistory = []; }
           renderChart();
           updateDayChange();
         }
@@ -995,7 +999,7 @@
           body: JSON.stringify({ buyPrice: val })
         });
         const updated = await r.json();
-        const idx = items.findIndex(w => w.id === watchlistId);
+        const idx = items.findIndex(w => String(w.id) === String(watchlistId));
         if (idx !== -1) items[idx] = updated;
         renderSidebar();
         renderMain(updated);
@@ -1010,7 +1014,7 @@
       if (!confirm('Usunąć ten przedmiot z obserwowanych?')) return;
       try {
         await fetch(`${API}/watchlist/${id}`, { method: 'DELETE', headers: authHeaders() });
-        if (activeId === id) {
+        if (String(activeId) === String(id)) {
           activeId = null;
           $('main').innerHTML = `
             <div class="empty-state">
