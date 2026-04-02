@@ -421,7 +421,9 @@
       <div class="topbar-right">
         <div class="dot" id="sDot"></div>
         <div class="status-txt" id="sTxt">Łączenie...</div>
-        <button class="btn ghost" onclick="openAuthModal()">Zaloguj</button>
+        <div id="authBtn">
+          <button class="btn ghost" onclick="openAuthModal()">Zaloguj</button>
+        </div>
       </div>
     </div>
 
@@ -1149,6 +1151,30 @@
       $('modal').classList.add('show');
     }
 
+    function updateAuthUI() {
+      const token = localStorage.getItem('token');
+      const btn = $('authBtn');
+      if (token) {
+        const email = localStorage.getItem('userEmail') || 'Konto';
+        btn.innerHTML = `
+          <span style="font-size:12px;color:var(--muted2);margin-right:6px">${email}</span>
+          <button class="btn ghost sm" onclick="logout()">Wyloguj</button>`;
+      } else {
+        btn.innerHTML = `<button class="btn ghost" onclick="openAuthModal()">Zaloguj</button>`;
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('token');
+      items = [];
+      activeId = null;
+      $('cnt').textContent = '0';
+      $('wlist').innerHTML = '<div style="padding:20px 14px;color:var(--muted);font-size:12px;text-align:center">Zaloguj się, by zobaczyć swoje przedmioty.</div>';
+      $('main').innerHTML = `<div class="empty-state"><div class="empty-icon">🎯</div><div class="empty-title">Brak wybranego przedmiotu</div><div style="font-size:13px">Dodaj skórki z listy po lewej i śledź ich ceny</div><button class="btn" style="margin-top:14px" onclick="openModal()">+ Dodaj pierwszy przedmiot</button></div>`;
+      updateAuthUI();
+      toast('Wylogowano', 'ok');
+    }
+
     function openAuthModal() {
       $('auth-email').value = '';
       $('auth-password').value = '';
@@ -1165,12 +1191,17 @@
       const password = $('auth-password').value;
       if (!email || !password) { toast('Podaj email i hasło', 'err'); return; }
       try {
-        const res = await fetch(`${API}/login`, { method: 'POST', headers: authHeaders(true), body: JSON.stringify({ email, password }) });
+        const res = await fetch(`${API}/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
         if (!res.ok) { toast('Błędne dane logowania', 'err'); return; }
         const data = await res.json();
-        if (data.token) localStorage.setItem('token', data.token);
+        if (data.token) {
+          localStorage.setItem('token', data.token);
+          // zapisz email osobno bo JWT payload może go nie mieć
+          localStorage.setItem('userEmail', email);
+        }
         toast('Zalogowano ✓', 'ok');
         closeAuthModal();
+        updateAuthUI();
         await loadWatchlist();
       } catch {
         toast('Błąd połączenia przy logowaniu', 'err');
@@ -1207,6 +1238,7 @@
     }
 
     // init
+    updateAuthUI();
     checkStatus();
     loadWatchlist();
     setInterval(checkStatus, 30000);
