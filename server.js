@@ -111,16 +111,26 @@ app.get('/api/watchlist', auth, async (req, res) => {
        ORDER BY w.created_at DESC`,
       [req.userId]
     );
-    res.json(result.rows.map(r => ({
-      id: r.id, item_id: r.item_id, name: r.name, market_hash: r.market_hash, imageUrl: r.image_url,
-      currentPrice: r.current_price ? parseFloat(r.current_price) : null,
-      currentMedian: r.current_median ? parseFloat(r.current_median) : null,
-      currentVolume: r.current_volume || 0,
-      lastUpdated: r.last_updated ? new Date(r.last_updated).getTime() : null,
-      totalQuantity: parseInt(r.total_quantity) || 0,
-      totalCost: parseFloat(r.total_cost) || 0,
-      purchases: r.purchases || []
-    })));
+    res.json(result.rows.map(r => {
+      const cp = r.current_price ? parseFloat(r.current_price) : null;
+      const totalQty = parseInt(r.total_quantity) || 0;
+      const totalSpent = parseFloat(r.total_cost) || 0;
+      const totalValue = cp && totalQty ? cp * totalQty : null;
+      const totalPnl = totalValue != null ? totalValue - totalSpent : null;
+      const pnlPct = totalPnl != null && totalSpent > 0 ? (totalPnl / totalSpent) * 100 : null;
+      const avgBuyPrice = totalQty > 0 ? totalSpent / totalQty : null;
+      return {
+        id: r.id, item_id: r.item_id, name: r.name, market_hash: r.market_hash, imageUrl: r.image_url,
+        currentPrice: cp,
+        currentMedian: r.current_median ? parseFloat(r.current_median) : null,
+        currentVolume: r.current_volume || 0,
+        lastUpdated: r.last_updated ? new Date(r.last_updated).getTime() : null,
+        totalQty, totalSpent, totalValue, totalPnl, pnlPct, avgBuyPrice,
+        // keep old names too for compat
+        totalQuantity: totalQty, totalCost: totalSpent,
+        purchases: r.purchases || []
+      };
+    }));
   } catch (e) { console.error(e); res.status(500).json({ error: 'server_error' }); }
 });
 
@@ -148,30 +158,67 @@ app.delete('/api/watchlist/:id', auth, async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: 'server_error' }); }
 });
 
-// PURCHASES
-app.post('/api/watchlist/:watchlistId/purchases', auth, async (req, res) => {
+// PURCHASES - POST /api/purchases/:watchlistId
+app.post('/api/purchases/:watchlistId', auth, async (req, res) => {
   try {
     const wId = Number(req.params.watchlistId);
     const { quantity, buyPrice, note } = req.body;
     const check = await pool.query('SELECT id FROM watchlist WHERE id=$1 AND user_id=$2', [wId, req.userId]);
     if (!check.rowCount) return res.status(403).json({ error: 'forbidden' });
-    const r = await pool.query(
-      'INSERT INTO purchases (watchlist_id,quantity,buy_price,note,bought_at) VALUES ($1,$2,$3,$4,NOW()) RETURNING *',
+    await pool.query(
+      'INSERT INTO purchases (watchlist_id,quantity,buy_price,note,bought_at) VALUES ($1,$2,$3,$4,NOW())',
       [wId, quantity, buyPrice, note || null]
     );
-    res.json(r.rows[0]);
+    // Return updated watchlist item
+    const updated = await getWatchlistItem(wId, req.userId);
+    res.json(updated);
   } catch (e) { console.error(e); res.status(500).json({ error: 'server_error' }); }
 });
 
-app.delete('/api/purchases/:id', auth, async (req, res) => {
+// DELETE /api/purchases/:watchlistId/:purchaseId
+app.delete('/api/purchases/:watchlistId/:purchaseId', auth, async (req, res) => {
   try {
+    const wId = Number(req.params.watchlistId);
+    const pid = Number(req.params.purchaseId);
     await pool.query(
       'DELETE FROM purchases p USING watchlist w WHERE p.id=$1 AND p.watchlist_id=w.id AND w.user_id=$2',
-      [req.params.id, req.userId]
+      [pid, req.userId]
     );
-    res.json({ ok: true });
+    const updated = await getWatchlistItem(wId, req.userId);
+    res.json(updated);
   } catch (e) { console.error(e); res.status(500).json({ error: 'server_error' }); }
 });
+
+async function getWatchlistItem(wId, userId) {
+  const r = await pool.query(
+    `SELECT w.id, i.id AS item_id, i.name, i.market_hash, i.image_url,
+            i.current_price, i.current_median, i.current_volume, i.last_updated,
+            COALESCE(SUM(p.quantity),0) AS total_quantity,
+            COALESCE(SUM(p.quantity*p.buy_price),0) AS total_cost,
+            json_agg(json_build_object('id',p.id,'quantity',p.quantity,'buy_price',p.buy_price,'bought_at',p.bought_at,'note',p.note) ORDER BY p.bought_at DESC) FILTER (WHERE p.id IS NOT NULL) AS purchases
+     FROM watchlist w JOIN items i ON i.id=w.item_id LEFT JOIN purchases p ON p.watchlist_id=w.id
+     WHERE w.id=$1 AND w.user_id=$2 GROUP BY w.id, i.id`,
+    [wId, userId]
+  );
+  if (!r.rowCount) return null;
+  const row = r.rows[0];
+  const cp = row.current_price ? parseFloat(row.current_price) : null;
+  const totalQty = parseInt(row.total_quantity) || 0;
+  const totalSpent = parseFloat(row.total_cost) || 0;
+  const totalValue = cp && totalQty ? cp * totalQty : null;
+  const totalPnl = totalValue != null ? totalValue - totalSpent : null;
+  const pnlPct = totalPnl != null && totalSpent > 0 ? (totalPnl / totalSpent) * 100 : null;
+  return {
+    id: row.id, item_id: row.item_id, name: row.name, imageUrl: row.image_url,
+    currentPrice: cp, currentMedian: row.current_median ? parseFloat(row.current_median) : null,
+    currentVolume: row.current_volume || 0,
+    lastUpdated: row.last_updated ? new Date(row.last_updated).getTime() : null,
+    totalQty, totalSpent, totalValue, totalPnl, pnlPct,
+    avgBuyPrice: totalQty > 0 ? totalSpent / totalQty : null,
+    totalQuantity: totalQty, totalCost: totalSpent,
+    purchases: row.purchases || []
+  };
+}
 
 // REFRESH
 app.post('/api/refresh/:itemId', auth, async (req, res) => {
